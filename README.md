@@ -245,7 +245,7 @@ Ideas and bug reports are welcome — open an [issue](https://github.com/Anucode
 
 <div align="center">
 
-<a href="https://github.com/Anucodex21/e-rahi-bareilly">
+<a href="https://github.com/Anucodex21/E-Rahi-Demo">
   <img src="https://github-readme-stats.vercel.app/api/pin/?username=Anucodex21&repo=e-rahi-bareilly&theme=radical&hide_border=true" alt="Repo card" />
 </a>
 
