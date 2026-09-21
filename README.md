@@ -3,7 +3,7 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=220&section=header&text=E-Rahi%20%F0%9F%9B%BA&fontSize=72&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=%E0%A4%88-%E0%A4%B0%E0%A4%BE%E0%A4%B9%E0%A5%80%20%E2%80%A2%20Bareilly%20City%20Super-App&descSize=20&descAlignY=60" width="100%" alt="E-Rahi header" />
 
 <a href="https://github.com/Anucodex21/e-rahi-bareilly">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=F59E0B&center=true&vCenter=true&width=720&lines=Hyperlocal+traffic+%26+e-rickshaw+routing+%F0%9F%9A%A6;Crowdsourced+auto-detour+engine+%F0%9F%A7%A0;Women's+safety+SOS+guard+%F0%9F%9B%A1%EF%B8%8F;Hospitals%2C+hotels%2C+colleges+%26+stores+%F0%9F%8F%99%EF%B8%8F;English+%7C+%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80+%7C+%D8%A7%D8%B1%D8%AF%D9%88+%F0%9F%8C%90" alt="Typing animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=F59E0B&center=true&vCenter=true&width=720&lines=local+traffic+%26+e-+routing+%F0%9F%9A%A6;Crowdsourced+auto-detour+engine+%F0%9F%A7%A0;Women's+safety+SOS+guard+%F0%9F%9B%A1%EF%B8%8F;Hospitals%2C+hotels%2C+colleges+%26+stores+%F0%9F%8F%99%EF%B8%8F;English+%7C+%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80+%7C+%D8%A7%D8%B1%D8%AF%D9%88+%F0%9F%8C%90" alt="Typing animation" />
 </a>
 
 <br/>
@@ -20,7 +20,7 @@
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=Anucodex21.e-rahi-bareilly)
 
 <p>
-  <b>Hyperlocal traffic, e-rickshaw routing, women's safety and city services — in one PWA.</b>
+  <b>local traffic, e-rickshaw routing, women's safety and city services — in one PWA.</b>
 </p>
 
 </div>
