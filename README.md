@@ -237,7 +237,7 @@ Ideas and bug reports are welcome — open an [issue](https://github.com/Anucode
 
 ## 👤 Author
 
-**Arjun** — BCA student at MJPRU, Bareilly, building toward a full-stack AI engineering role.
+**Arjun** —  building toward a  AI engineering role.
 
 [![GitHub](https://img.shields.io/badge/GitHub-Anucodex21-181717?logo=github)](https://github.com/Anucodex21)
 
