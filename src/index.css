@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Leaflet container and custom pin helpers */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  touch-action: pan-x pan-y pinch-zoom;
+  background-color: #f1f5f9;
+}
+
+/* Hardware accelerated smooth map pan and zoom transitions */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.leaflet-tile {
+  transition: opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.custom-choke-pin,
+.custom-report-pin,
+.origin-marker,
+.dest-marker,
+.charging-pin,
+.google-origin-pin,
+.google-dest-pin,
+.google-my-location-dot,
+.live-erickshaw-active-marker {
+  background: transparent !important;
+  border: none !important;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+  padding: 0;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.leaflet-popup-content {
+  margin: 0.75rem 0.85rem;
+  line-height: 1.4;
+}

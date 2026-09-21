@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "E-Rahi India - ई-राही इंडिया",
+  "short_name": "E-Rahi India",
+  "description": "E-Rahi India: Hyperlocal Traffic & E-Rickshaw Route Optimizer across Indian cities, avoiding choked points and bottlenecks.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

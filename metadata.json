@@ -1,0 +1,6 @@
+{
+  "name": "E-Rahi India",
+  "description": "Smart Transit, City Directory & Professional Emergency SOS Safety Guard with live location WhatsApp & SMS dispatch to Husband/Guardians, pre-shutdown last known location broadcast, and device power-on tracking.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

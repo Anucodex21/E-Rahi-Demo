@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="128" fill="#f59e0b"/>
+  <circle cx="256" cy="256" r="220" fill="#d97706" opacity="0.3"/>
+  <g transform="translate(64, 80) scale(0.75)" fill="#ffffff">
+    <path d="M120 180 L220 80 L360 80 L400 180 L440 240 L440 320 L400 320 A60 60 0 0 1 280 320 L160 320 A60 60 0 0 1 40 320 L40 240 Z" fill="#1e293b"/>
+    <path d="M140 180 L220 100 L340 100 L370 180 Z" fill="#38bdf8" opacity="0.9"/>
+    <circle cx="100" cy="340" r="45" fill="#0f172a" stroke="#ffffff" stroke-width="12"/>
+    <circle cx="340" cy="340" r="45" fill="#0f172a" stroke="#ffffff" stroke-width="12"/>
+    <circle cx="100" cy="340" r="18" fill="#f59e0b"/>
+    <circle cx="340" cy="340" r="18" fill="#f59e0b"/>
+    <rect x="230" y="160" width="40" height="90" rx="8" fill="#f59e0b"/>
+    <path d="M380 200 L430 200 L420 220 L380 220 Z" fill="#ef4444"/>
+  </g>
+  <text x="256" y="440" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900" text-anchor="middle" fill="#ffffff" letter-spacing="4">
+    E-RAHI
+  </text>
+</svg>
