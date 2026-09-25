@@ -211,7 +211,7 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
   };
 
   return (
-    <div className="bg-white border-b border-slate-200/80 shadow-2xs relative z-30">
+    <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs relative z-30">
       <div className="max-w-7xl w-full mx-auto px-3 sm:px-4 py-2">
         
         {/* 4 Dedicated Searching Bars in Sequential Transit Flow */}
@@ -227,20 +227,20 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                 setIsDestOpen(false);
                 setTimeout(() => stateInputRef.current?.focus(), 50);
               }}
-              className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100/80 border rounded-xl transition-all cursor-pointer shadow-2xs ${
+              className={`group flex items-center justify-between gap-2 px-3 py-2 bg-slate-50/80 hover:bg-slate-100/80 border rounded-2xl transition-all cursor-pointer shadow-2xs ${
                 isStateOpen
-                  ? 'border-slate-800 ring-2 ring-slate-800/10 bg-white'
+                  ? 'border-slate-900 ring-2 ring-slate-900/10 bg-white'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-6 h-6 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-7 h-7 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center text-xs font-semibold shrink-0">
                   <Building2 className="w-3.5 h-3.5" />
                 </div>
                 
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                    {isHindi ? 'राज्य (State)' : 'State'}
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {isHindi ? 'राज्य' : 'State'}
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -278,23 +278,23 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                     <X className="w-3.5 h-3.5" />
                   </button>
                 ) : (
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-slate-600 bg-slate-200/70 px-1.5 py-0.5 rounded-lg">
                     {currentState.code}
                   </span>
                 )}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isStateOpen ? 'rotate-180 text-slate-800' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isStateOpen ? 'rotate-180 text-slate-900' : ''}`} />
               </div>
             </div>
 
             {/* State Dropdown Menu */}
             {isStateOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col">
-                <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 text-[11px] flex items-center gap-1">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col p-1">
+                <div className="p-2 bg-slate-50/80 rounded-xl text-xs flex items-center justify-between mb-1">
+                  <span className="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
                     <Search className="w-3 h-3 text-slate-500" />
                     {isHindi ? 'राज्य चुनें' : 'Select State'}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-400 font-semibold">
                     {filteredStates.length}
                   </span>
                 </div>
@@ -312,22 +312,22 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                           key={state.id}
                           type="button"
                           onClick={() => handleSelectState(state)}
-                          className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                          className={`w-full px-3 py-2 text-left rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                             isSelected
-                              ? 'bg-slate-100 text-slate-900 font-bold'
+                              ? 'bg-slate-900 text-white font-bold'
                               : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-slate-900">
+                            <span className={`text-xs ${isSelected ? 'font-bold text-white' : 'font-semibold text-slate-900'}`}>
                               {state.name}
                             </span>
-                            <span className="text-[11px] text-slate-400 ml-1">
+                            <span className={`text-[11px] ml-1 ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
                               ({state.hindiName})
                             </span>
                           </div>
 
-                          <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg shrink-0 ${isSelected ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500'}`}>
                             {state.code}
                           </span>
                         </button>
@@ -349,20 +349,20 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                 setIsDestOpen(false);
                 setTimeout(() => cityInputRef.current?.focus(), 50);
               }}
-              className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100/80 border rounded-xl transition-all cursor-pointer shadow-2xs ${
+              className={`group flex items-center justify-between gap-2 px-3 py-2 bg-slate-50/80 hover:bg-slate-100/80 border rounded-2xl transition-all cursor-pointer shadow-2xs ${
                 isCityOpen
-                  ? 'border-slate-800 ring-2 ring-slate-800/10 bg-white'
+                  ? 'border-slate-900 ring-2 ring-slate-900/10 bg-white'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-6 h-6 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-7 h-7 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center text-xs font-semibold shrink-0">
                   <MapPin className="w-3.5 h-3.5" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                    {isHindi ? 'शहर (City)' : 'City'}
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {isHindi ? 'शहर' : 'City'}
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -400,23 +400,23 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                     <X className="w-3.5 h-3.5" />
                   </button>
                 ) : (
-                  <span className="text-[10px] font-medium text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-slate-600 bg-slate-200/70 px-1.5 py-0.5 rounded-lg">
                     {currentCity.locations.length} {isHindi ? 'हब' : 'Hubs'}
                   </span>
                 )}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isCityOpen ? 'rotate-180 text-slate-800' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isCityOpen ? 'rotate-180 text-slate-900' : ''}`} />
               </div>
             </div>
 
             {/* City Dropdown Menu */}
             {isCityOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col">
-                <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 text-[11px] flex items-center gap-1">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col p-1">
+                <div className="p-2 bg-slate-50/80 rounded-xl text-xs flex items-center justify-between mb-1">
+                  <span className="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
                     <MapPin className="w-3 h-3 text-slate-500" />
                     {currentState.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-400 font-semibold">
                     {filteredCities.length}
                   </span>
                 </div>
@@ -434,22 +434,22 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                           key={`${city.stateId}-${city.id}`}
                           type="button"
                           onClick={() => handleSelectCity(city)}
-                          className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                          className={`w-full px-3 py-2 text-left rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                             isSelected
-                              ? 'bg-slate-100 text-slate-900 font-bold'
+                              ? 'bg-slate-900 text-white font-bold'
                               : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-slate-900">
+                            <span className={`text-xs ${isSelected ? 'font-bold text-white' : 'font-semibold text-slate-900'}`}>
                               {city.name}
                             </span>
-                            <span className="text-[11px] text-slate-400 ml-1">
+                            <span className={`text-[11px] ml-1 ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
                               ({city.hindiName})
                             </span>
                           </div>
 
-                          <span className="text-[10px] text-slate-500 font-medium shrink-0">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg shrink-0 ${isSelected ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500'}`}>
                             {city.locations.length} {isHindi ? 'हब' : 'Hubs'}
                           </span>
                         </button>
@@ -471,20 +471,20 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                 setIsDestOpen(false);
                 setTimeout(() => originInputRef.current?.focus(), 50);
               }}
-              className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100/80 border rounded-xl transition-all cursor-pointer shadow-2xs ${
+              className={`group flex items-center justify-between gap-2 px-3 py-2 bg-slate-50/80 hover:bg-slate-100/80 border rounded-2xl transition-all cursor-pointer shadow-2xs ${
                 isOriginOpen
                   ? 'border-emerald-600 ring-2 ring-emerald-600/10 bg-white'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold shrink-0">
                   <Navigation className="w-3.5 h-3.5" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-medium text-emerald-700 uppercase tracking-wider">
-                    {isHindi ? 'कहाँ से (From)' : 'From'}
+                  <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                    {isHindi ? 'कहाँ से' : 'Pick'}
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -492,7 +492,7 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                       ref={originInputRef}
                       type="text"
                       value={isOriginOpen ? originQuery : (activeOrigin?.name || '')}
-                      placeholder={isHindi ? 'From Location खोजें...' : 'Search From...'}
+                      placeholder={isHindi ? 'Pick लोकेशन...' : 'Search Pick...'}
                       onChange={(e) => {
                         setOriginQuery(e.target.value);
                         if (!isOriginOpen) setIsOriginOpen(true);
@@ -534,19 +534,19 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                     <ArrowRightLeft className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOriginOpen ? 'rotate-180 text-emerald-700' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isOriginOpen ? 'rotate-180 text-emerald-700' : ''}`} />
               </div>
             </div>
 
             {/* Origin Dropdown Menu */}
             {isOriginOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col">
-                <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 text-[11px] flex items-center gap-1">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col p-1">
+                <div className="p-2 bg-slate-50/80 rounded-xl text-xs flex items-center justify-between mb-1">
+                  <span className="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
                     <Navigation className="w-3 h-3 text-emerald-600" />
                     {isHindi ? 'शुरुआती स्थान चुनें:' : 'Starting Point:'}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-400 font-semibold">
                     {filteredOrigins.length}
                   </span>
                 </div>
@@ -554,37 +554,32 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                 <div className="overflow-y-auto divide-y divide-slate-100 flex-1 scrollbar-thin">
                   {filteredOrigins.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400 font-medium">
-                      {isHindi ? 'लोकेशन नहीं मिली' : 'No location found'}
+                      {isHindi ? 'कोई स्थान नहीं मिला' : 'No location found'}
                     </div>
                   ) : (
                     filteredOrigins.map((loc) => {
-                      const isSelected = loc.id === activeOrigin?.id;
+                      const isSelected = activeOrigin?.id === loc.id;
                       return (
                         <button
                           key={loc.id}
                           type="button"
                           onClick={() => handleSelectOrigin(loc)}
-                          className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                          className={`w-full px-3 py-2 text-left rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                             isSelected
-                              ? 'bg-emerald-50 text-emerald-950 font-bold'
+                              ? 'bg-emerald-600 text-white font-bold'
                               : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Navigation className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-emerald-600' : 'text-slate-400'}`} />
-                            <span className="text-xs font-semibold text-slate-900 truncate">
+                          <div className="min-w-0">
+                            <span className={`text-xs ${isSelected ? 'font-bold text-white' : 'font-semibold text-slate-900'}`}>
                               {loc.name}
                             </span>
-                            <span className="text-[11px] text-slate-400 ml-1">
+                            <span className={`text-[11px] ml-1 ${isSelected ? 'text-emerald-100' : 'text-slate-400'}`}>
                               ({loc.hindiName})
                             </span>
                           </div>
 
-                          {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                              <Check className="w-3 h-3 stroke-[3]" />
-                            </div>
-                          )}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
                         </button>
                       );
                     })
@@ -604,20 +599,20 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                 setIsOriginOpen(false);
                 setTimeout(() => destInputRef.current?.focus(), 50);
               }}
-              className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100/80 border rounded-xl transition-all cursor-pointer shadow-2xs ${
+              className={`group flex items-center justify-between gap-2 px-3 py-2 bg-slate-50/80 hover:bg-slate-100/80 border rounded-2xl transition-all cursor-pointer shadow-2xs ${
                 isDestOpen
                   ? 'border-rose-600 ring-2 ring-rose-600/10 bg-white'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-7 h-7 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-semibold shrink-0">
                   <MapPin className="w-3.5 h-3.5" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-medium text-rose-700 uppercase tracking-wider">
-                    {isHindi ? 'कहाँ तक (To)' : 'To'}
+                  <div className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">
+                    {isHindi ? 'कहाँ तक' : 'Drop'}
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -625,7 +620,7 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                       ref={destInputRef}
                       type="text"
                       value={isDestOpen ? destQuery : (activeDestination?.name || '')}
-                      placeholder={isHindi ? 'To Location खोजें...' : 'Search To...'}
+                      placeholder={isHindi ? 'Drop लोकेशन...' : 'Search Drop...'}
                       onChange={(e) => {
                         setDestQuery(e.target.value);
                         if (!isDestOpen) setIsDestOpen(true);
@@ -655,23 +650,23 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                     <X className="w-3.5 h-3.5" />
                   </button>
                 ) : (
-                  <span className="text-[10px] font-medium text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
-                    {isHindi ? 'मंज़िल' : 'Dest'}
+                  <span className="text-[10px] font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded-lg">
+                    {isHindi ? 'मंज़िल' : 'Drop'}
                   </span>
                 )}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isDestOpen ? 'rotate-180 text-rose-600' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isDestOpen ? 'rotate-180 text-rose-600' : ''}`} />
               </div>
             </div>
 
             {/* Destination Dropdown Menu */}
             {isDestOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col">
-                <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 text-[11px] flex items-center gap-1">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 z-[1300] overflow-hidden animate-in fade-in duration-100 max-h-[280px] flex flex-col p-1">
+                <div className="p-2 bg-slate-50/80 rounded-xl text-xs flex items-center justify-between mb-1">
+                  <span className="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
                     <MapPin className="w-3 h-3 text-rose-600" />
                     {isHindi ? 'मंज़िल चुनें:' : 'Destination:'}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-400 font-semibold">
                     {filteredDestinations.length}
                   </span>
                 </div>
@@ -679,7 +674,7 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                 <div className="overflow-y-auto divide-y divide-slate-100 flex-1 scrollbar-thin">
                   {filteredDestinations.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400 font-medium">
-                      {isHindi ? 'लोकेशन नहीं मिली' : 'No location found'}
+                      {isHindi ? 'कोई स्थान नहीं मिला' : 'No location found'}
                     </div>
                   ) : (
                     filteredDestinations.map((loc) => {
@@ -689,27 +684,22 @@ export const StateCitySelector: React.FC<StateCitySelectorProps> = ({
                           key={loc.id}
                           type="button"
                           onClick={() => handleSelectDestination(loc)}
-                          className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                          className={`w-full px-3 py-2 text-left rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                             isSelected
-                              ? 'bg-rose-50 text-rose-950 font-bold'
+                              ? 'bg-rose-600 text-white font-bold'
                               : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-rose-600' : 'text-slate-400'}`} />
-                            <span className="text-xs font-semibold text-slate-900 truncate">
+                          <div className="min-w-0">
+                            <span className={`text-xs ${isSelected ? 'font-bold text-white' : 'font-semibold text-slate-900'}`}>
                               {loc.name}
                             </span>
-                            <span className="text-[11px] text-slate-400 ml-1">
+                            <span className={`text-[11px] ml-1 ${isSelected ? 'text-rose-100' : 'text-slate-400'}`}>
                               ({loc.hindiName})
                             </span>
                           </div>
 
-                          {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
-                              <Check className="w-3 h-3 stroke-[3]" />
-                            </div>
-                          )}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
                         </button>
                       );
                     })

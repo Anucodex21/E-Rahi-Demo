@@ -968,11 +968,11 @@ export const BareillyFareCalculator: React.FC<Props> = ({
       {/* Sleek, Professional Header */}
       <div id="fare-search-header" className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center font-bold text-base shadow-2xs">
-            🛺
+          <div className="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-base shadow-2xs shrink-0">
+            <Calculator className="w-4 h-4" />
           </div>
           <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-            {cityName} Fare & Routes
+            {isHindi ? 'किराया और रूट' : 'Fare & Routes'}
           </h1>
         </div>
 
@@ -994,7 +994,7 @@ export const BareillyFareCalculator: React.FC<Props> = ({
           <div id="fare-from-input-group" className="md:col-span-5 relative" ref={fromRef}>
             <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>{isHindi ? 'कहाँ से (Pickup):' : 'Pickup Location (From):'}</span>
+              <span>{isHindi ? 'पिकअप' : 'Pick'}</span>
             </label>
 
             <div className="relative">
@@ -1062,7 +1062,7 @@ export const BareillyFareCalculator: React.FC<Props> = ({
           <div id="fare-to-input-group" className="md:col-span-6 relative" ref={toRef}>
             <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500" />
-              <span>{isHindi ? 'कहाँ तक (Drop):' : 'Drop Location (To):'}</span>
+              <span>{isHindi ? 'ड्रॉप' : 'Drop'}</span>
             </label>
 
             <div className="relative">
@@ -1160,25 +1160,25 @@ export const BareillyFareCalculator: React.FC<Props> = ({
         <div id="fare-search-results-card" className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-4 space-y-3.5">
           
           {/* Route Overview */}
-          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                <span>~{calculatedResult.distanceKm} km</span>
-                <span>•</span>
+          <div className="bg-slate-50/90 border border-slate-200/90 rounded-xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                <span className="font-semibold text-slate-700">~{calculatedResult.distanceKm} km</span>
+                <span className="text-slate-300">•</span>
                 <span>~{calculatedResult.estimatedMin} mins</span>
               </div>
 
               <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-slate-900">
-                <span className="text-emerald-700">{calculatedResult.originName.split('(')[0].trim()}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="text-rose-700">{calculatedResult.destName.split('(')[0].trim()}</span>
+                <span>{calculatedResult.originName.split('(')[0].trim()}</span>
+                <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>{calculatedResult.destName.split('(')[0].trim()}</span>
               </div>
             </div>
 
             {/* Audio Voice Readout */}
             <button
               onClick={handleSpeakFare}
-              className="self-start sm:self-center px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
+              className="self-start sm:self-center px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
             >
               {isSpeaking ? (
                 <>
@@ -1195,36 +1195,36 @@ export const BareillyFareCalculator: React.FC<Props> = ({
           </div>
 
           {/* Just Per Seat Pricing Card */}
-          <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 sm:p-4">
+          <div className="bg-slate-50/90 border border-slate-200/90 rounded-xl p-3.5 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                  <Users className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-2xs shrink-0">
+                  <Users className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <div className="text-xs font-medium text-emerald-800">
-                    {isHindi ? 'ई-रिक्शा शेयरिंग किराया' : 'Standard Shared Tariff'}
+                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    {isHindi ? 'ई-रिक्शा शेयरिंग किराया' : 'Standard Shared Fare'}
                   </div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-2xl font-black text-emerald-950">₹{effectivePerSeatFare}</span>
-                    <span className="text-xs font-semibold text-emerald-700">/{isHindi ? 'प्रति सीट' : 'per seat'}</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">₹{effectivePerSeatFare}</span>
+                    <span className="text-xs font-semibold text-slate-500">/{isHindi ? 'प्रति सीट' : 'per seat'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Passenger Selector */}
-              <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-200/60">
-                <span className="text-xs font-medium text-slate-600">{isHindi ? 'सवारी:' : 'Seats:'}</span>
-                <div className="flex items-center gap-1 bg-white border border-emerald-200 rounded-lg p-0.5 shadow-2xs">
+              <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                <span className="text-xs font-semibold text-slate-600">{isHindi ? 'सवारी:' : 'Seats:'}</span>
+                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
                   {[1, 2, 3, 4].map((num) => (
                     <button
                       key={num}
                       type="button"
                       onClick={() => setPassengers(num)}
-                      className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         passengers === num
-                          ? 'bg-emerald-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:bg-slate-100'
+                          ? 'bg-slate-900 text-white shadow-2xs'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                       }`}
                     >
                       {num}
@@ -1233,7 +1233,7 @@ export const BareillyFareCalculator: React.FC<Props> = ({
                 </div>
 
                 {passengers > 1 && (
-                  <div className="text-xs font-bold text-slate-800 ml-1">
+                  <div className="text-xs font-bold text-slate-900 ml-1.5 px-2 py-1 bg-amber-50 border border-amber-200/80 rounded-lg">
                     = ₹{effectivePerSeatFare * passengers}
                   </div>
                 )}
@@ -1272,72 +1272,101 @@ export const BareillyFareCalculator: React.FC<Props> = ({
       <div id="fare-popular-corridors-section" className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <span>⭐</span>
             <span>{isHindi ? `${cityName} रूट रेट कार्ड` : `${cityName} Corridors & Rates`}</span>
           </h2>
 
           {/* Category Filter Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-            {['All', 'Popular', 'Commuter', 'Station', 'Student', 'Market', 'Hospital'].map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategoryFilter(cat)}
-                className={`px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer ${
-                  selectedCategoryFilter === cat
-                    ? 'bg-slate-900 text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {cat === 'All' ? (isHindi ? 'सभी' : 'All') : cat}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {['All', 'Popular', 'Commuter', 'Station', 'Student', 'Market', 'Hospital'].map((cat) => {
+              const isSelected = selectedCategoryFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategoryFilter(cat)}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer select-none ${
+                    isSelected
+                      ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                      : 'bg-slate-100/90 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900 border border-slate-200/60'
+                  }`}
+                >
+                  {cat === 'All' ? (isHindi ? 'सभी कॉरीडोर' : 'All Routes') : cat}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Corridor Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          {filteredCorridors.map((rule) => (
-            <button
-              key={rule.id}
-              type="button"
-              onClick={() => {
-                setFromQuery(rule.originName);
-                setToQuery(rule.destName);
-                const oLoc = availableLocations.find(l => l.id === rule.originId) || availableLocations[0];
-                const dLoc = availableLocations.find(l => l.id === rule.destId) || availableLocations[1];
-                setSelectedFromLoc(oLoc);
-                setSelectedToLoc(dLoc);
-                handleSearchFare(oLoc, dLoc);
-              }}
-              className="text-left p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between gap-1.5 shadow-2xs group"
-            >
-              <div className="space-y-0.5 w-full">
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold">
-                  <span className="px-1.5 py-0.2 rounded bg-slate-200/80 text-slate-700">{rule.category}</span>
-                  <span className="text-slate-500 font-medium">
-                    ~{rule.distanceKm} km
-                  </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filteredCorridors.map((rule) => {
+            const getCategoryBadge = (category: string) => {
+              switch (category) {
+                case 'Popular':
+                  return 'bg-amber-50 text-amber-900 border-amber-200/80';
+                case 'Station':
+                  return 'bg-blue-50 text-blue-900 border-blue-200/80';
+                case 'Student':
+                  return 'bg-emerald-50 text-emerald-900 border-emerald-200/80';
+                case 'Hospital':
+                  return 'bg-rose-50 text-rose-900 border-rose-200/80';
+                case 'Market':
+                  return 'bg-purple-50 text-purple-900 border-purple-200/80';
+                default:
+                  return 'bg-slate-100 text-slate-800 border-slate-200';
+              }
+            };
+
+            return (
+              <button
+                key={rule.id}
+                type="button"
+                onClick={() => {
+                  setFromQuery(rule.originName);
+                  setToQuery(rule.destName);
+                  const oLoc = availableLocations.find(l => l.id === rule.originId) || availableLocations[0];
+                  const dLoc = availableLocations.find(l => l.id === rule.destId) || availableLocations[1];
+                  setSelectedFromLoc(oLoc);
+                  setSelectedToLoc(dLoc);
+                  handleSearchFare(oLoc, dLoc);
+                }}
+                className="text-left p-3.5 rounded-2xl bg-white hover:bg-slate-50/90 border border-slate-200/90 hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2.5 group"
+              >
+                <div className="space-y-1.5 w-full">
+                  <div className="flex items-center justify-between text-[11px] font-semibold">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border tracking-wide uppercase ${getCategoryBadge(rule.category)}`}>
+                      {rule.category}
+                    </span>
+                    <span className="text-slate-500 font-medium text-[11px] flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                      <span>📍</span> ~{rule.distanceKm} km
+                    </span>
+                  </div>
+
+                  <div className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight line-clamp-1 group-hover:text-amber-600 transition-colors flex items-center gap-1.5 pt-0.5">
+                    <span>{rule.originName.split(' ')[0]}</span>
+                    <span className="text-slate-400 font-normal">➔</span>
+                    <span>{rule.destName.split(' ')[0]}</span>
+                  </div>
                 </div>
 
-                <div className="text-xs font-semibold text-slate-900 line-clamp-1">
-                  {rule.originName.split(' ')[0]} ➔ {rule.destName.split(' ')[0]}
-                </div>
-              </div>
-
-              <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between w-full">
-                <span className="text-xs font-bold text-emerald-800">
-                  {rule.fareRangeText}
-                  <span className="text-[10px] text-slate-400 font-normal ml-0.5">
-                    /{isHindi ? 'सीट' : 'seat'}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between w-full">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-extrabold text-slate-900 tracking-tight">
+                      {rule.fareRangeText}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      /{isHindi ? 'सीट' : 'seat'}
+                    </span>
+                  </div>
+                  
+                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/70 flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5 text-slate-400" />
+                    <span>{rule.frequency}</span>
                   </span>
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  ~{rule.frequency}
-                </span>
-              </div>
-            </button>
-          ))}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

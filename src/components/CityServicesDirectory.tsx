@@ -57,7 +57,7 @@ interface CityServicesDirectoryProps {
   onNavigateToLocation?: (lat: number, lng: number, name: string) => void;
   isPremium: boolean;
   onOpenPremiumModal: () => void;
-  onOpenStoreModal: () => void;
+  onOpenStoreModal: (storeToRenew?: LocalStoreClinic) => void;
   hospitals: HospitalFacility[];
   hotels: HotelLodge[];
   colleges: CollegeUniversity[];
@@ -945,11 +945,11 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
             )}
 
             <button
-              onClick={onOpenStoreModal}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer border border-slate-200"
+              onClick={() => onOpenStoreModal()}
+              className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-xs rounded-xl transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer border border-emerald-200"
             >
-              <Plus className="w-3.5 h-3.5 text-slate-600" />
-              <span>{isHindi ? 'दुकान / क्लीनिक जोड़ें' : 'Add Store / Clinic'}</span>
+              <Plus className="w-3.5 h-3.5 text-emerald-700" />
+              <span>{isHindi ? 'दुकान जोड़ें (₹19/3 माह)' : 'Add Shop (₹19/3 Mo)'}</span>
             </button>
           </div>
         </div>
@@ -981,7 +981,7 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
         </div>
       </div>
 
-      {/* Sub-Header / Main Section Switcher: Explore Directory vs My Bookings */}
+      {/* Sub-Header / Main Section Switcher: Explore vs My Bookings */}
       <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
         <button
           onClick={() => setMainSection('directory')}
@@ -992,7 +992,7 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
           }`}
         >
           <Search className="w-3.5 h-3.5 text-amber-400" />
-          <span>{isHindi ? '📍 खोजें व डायरेक्टरी' : 'Explore Directory'}</span>
+          <span>{isHindi ? 'एक्सप्लोर' : 'Explore'}</span>
         </button>
 
         <button
@@ -1007,7 +1007,7 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
           }`}
         >
           <CalendarCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>{isHindi ? '📋 मेरी बुकिंग्स व टोकन' : 'My Bookings & Tokens'}</span>
+          <span>{isHindi ? 'मेरी बुकिंग' : 'My Bookings'}</span>
           {bookingsCount > 0 && (
             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
               mainSection === 'my_bookings' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'
@@ -1029,11 +1029,11 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
       {/* =========================================================================
           UNIFIED SEARCH BAR & CATEGORY SELECTOR
          ========================================================================= */}
-      <div className="bg-white rounded-2xl p-3.5 sm:p-4.5 border border-slate-200/90 shadow-sm space-y-3">
+      <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-2xs space-y-3">
         {/* Single Unified Search Bar */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
               type="text"
               value={searchFilter}
@@ -1048,12 +1048,12 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                   ? 'हॉस्पिटल, डॉक्टर, होटल, लॉज, कॉलेज या क्लीनिक खोजें...'
                   : 'Search hospitals, doctors, hotels, lodges, colleges, clinics...'
               }
-              className="w-full pl-10 pr-9 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-slate-800 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-slate-850/15 transition-all shadow-2xs"
+              className="w-full pl-10 pr-9 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-slate-800 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-slate-800/10 transition-all shadow-2xs"
             />
             {searchFilter && (
               <button
                 onClick={() => setSearchFilter('')}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs cursor-pointer p-1"
                 title="Clear search"
               >
                 ✕
@@ -1067,9 +1067,9 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
               setViewMode('search_list');
               playCleanChime('alert');
             }}
-            className="px-4.5 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+            className="px-4.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
           >
-            <Search className="w-4 h-4 text-amber-400" />
+            <Search className="w-4 h-4 text-slate-300" />
             <span>{isHindi ? 'खोजें' : 'Search'}</span>
           </button>
         </div>
@@ -1083,15 +1083,15 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                 setSelectedCategory('all');
                 setViewMode('search_list');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 selectedCategory === 'all' && viewMode === 'search_list'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700'
+                  ? 'bg-slate-900 text-white shadow-xs font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              <span>{isHindi ? '🌐 सभी सेवाएं' : 'All Services'}</span>
+              <span>{isHindi ? 'सभी सेवाएं' : 'All Services'}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                selectedCategory === 'all' && viewMode === 'search_list' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                selectedCategory === 'all' && viewMode === 'search_list' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
               }`}>
                 {allPlaces.length}
               </span>
@@ -1104,15 +1104,19 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                 setActiveTab('hospitals');
                 setViewMode('search_list');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 selectedCategory === 'hospitals' && viewMode === 'search_list'
-                  ? 'bg-rose-700 text-white shadow-xs'
-                  : 'bg-rose-50 hover:bg-rose-100/80 text-rose-800 border border-rose-100'
+                  ? 'bg-slate-900 text-white shadow-xs font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              <Building2 className="w-3.5 h-3.5 text-rose-500" />
+              <Building2 className={`w-3.5 h-3.5 ${selectedCategory === 'hospitals' && viewMode === 'search_list' ? 'text-rose-400' : 'text-slate-500'}`} />
               <span>{isHindi ? 'हॉस्पिटल' : 'Hospitals'}</span>
-              <span className="text-[10px] opacity-80">({hospitals.length})</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCategory === 'hospitals' && viewMode === 'search_list' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {hospitals.length}
+              </span>
             </button>
 
             {/* 3. Hotel Option */}
@@ -1122,15 +1126,19 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                 setActiveTab('hotels');
                 setViewMode('search_list');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 selectedCategory === 'hotels' && viewMode === 'search_list'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-100'
+                  ? 'bg-slate-900 text-white shadow-xs font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              <BedDouble className="w-3.5 h-3.5 text-amber-600" />
+              <BedDouble className={`w-3.5 h-3.5 ${selectedCategory === 'hotels' && viewMode === 'search_list' ? 'text-amber-400' : 'text-slate-500'}`} />
               <span>{isHindi ? 'होटल' : 'Hotels'}</span>
-              <span className="text-[10px] opacity-80">({regularHotels.length})</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCategory === 'hotels' && viewMode === 'search_list' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {regularHotels.length}
+              </span>
             </button>
 
             {/* 4. Lodge Option */}
@@ -1140,15 +1148,19 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                 setActiveTab('hotels');
                 setViewMode('search_list');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 selectedCategory === 'lodges' && viewMode === 'search_list'
-                  ? 'bg-blue-700 text-white shadow-xs'
-                  : 'bg-blue-50 hover:bg-blue-100/80 text-blue-900 border border-blue-100'
+                  ? 'bg-slate-900 text-white shadow-xs font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              <Bed className="w-3.5 h-3.5 text-blue-600" />
+              <Bed className={`w-3.5 h-3.5 ${selectedCategory === 'lodges' && viewMode === 'search_list' ? 'text-blue-400' : 'text-slate-500'}`} />
               <span>{isHindi ? 'लॉज' : 'Lodges'}</span>
-              <span className="text-[10px] opacity-80">({studentLodges.length})</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCategory === 'lodges' && viewMode === 'search_list' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {studentLodges.length}
+              </span>
             </button>
 
             {/* 5. College & Universities Option */}
@@ -1158,15 +1170,19 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                 setActiveTab('colleges');
                 setViewMode('search_list');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 selectedCategory === 'colleges' && viewMode === 'search_list'
-                  ? 'bg-indigo-700 text-white shadow-xs'
-                  : 'bg-indigo-50 hover:bg-indigo-100/80 text-indigo-900 border border-indigo-100'
+                  ? 'bg-slate-900 text-white shadow-xs font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+              <GraduationCap className={`w-3.5 h-3.5 ${selectedCategory === 'colleges' && viewMode === 'search_list' ? 'text-indigo-400' : 'text-slate-500'}`} />
               <span>{isHindi ? 'कॉलेज' : 'Colleges'}</span>
-              <span className="text-[10px] opacity-80">({colleges.length})</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCategory === 'colleges' && viewMode === 'search_list' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {colleges.length}
+              </span>
             </button>
 
             {/* 6. Clinic Option */}
@@ -1176,22 +1192,26 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                 setActiveTab('local_stores');
                 setViewMode('search_list');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 selectedCategory === 'clinics' && viewMode === 'search_list'
-                  ? 'bg-emerald-700 text-white shadow-xs'
-                  : 'bg-emerald-50 hover:bg-emerald-100/80 text-emerald-900 border border-emerald-100'
+                  ? 'bg-slate-900 text-white shadow-xs font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              <Stethoscope className="w-3.5 h-3.5 text-emerald-600" />
+              <Stethoscope className={`w-3.5 h-3.5 ${selectedCategory === 'clinics' && viewMode === 'search_list' ? 'text-emerald-400' : 'text-slate-500'}`} />
               <span>{isHindi ? 'क्लीनिक' : 'Clinics'}</span>
-              <span className="text-[10px] opacity-80">({stores.length})</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCategory === 'clinics' && viewMode === 'search_list' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {stores.length}
+              </span>
             </button>
           </div>
 
           {/* Detailed Directory Switcher */}
           <button
             onClick={() => setViewMode(viewMode === 'search_list' ? 'detailed_directory' : 'search_list')}
-            className="text-[11px] font-bold text-slate-600 hover:text-slate-950 flex items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-slate-100 border border-slate-200 transition-colors shrink-0 cursor-pointer shadow-2xs"
+            className="text-[11px] font-semibold text-slate-600 hover:text-slate-950 flex items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-slate-100 border border-slate-200 transition-colors shrink-0 cursor-pointer shadow-2xs"
           >
             <span>
               {viewMode === 'search_list'
@@ -1373,13 +1393,7 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                         className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer shrink-0"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span>
-                          {item.categoryType === 'hospital'
-                            ? (isHindi ? 'ओपीडी टोकन लें' : 'Book OPD Token')
-                            : item.categoryType === 'clinic'
-                            ? (isHindi ? 'अपॉइंटमेंट लें' : 'Book Slot')
-                            : (isHindi ? 'कमरा बुक करें' : 'Book Room')}
-                        </span>
+                        <span>{isHindi ? 'बुक करें' : 'Book'}</span>
                       </button>
                     )}
 
@@ -2038,27 +2052,34 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
         <div className="space-y-4">
           
           {/* Promotion CTA Bar */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-                <Store className="w-4 h-4" />
+          <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-300/80 rounded-2xl p-3.5 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                <Store className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-black text-emerald-950">
-                  {isHindi ? 'स्थानीय व्यापार व क्लीनिक पार्टनर नेटवर्क' : 'Local Business & Clinic Partner Network'}
-                </h4>
-                <p className="text-[11px] text-emerald-700">
-                  {isHindi ? 'ई-राही यात्रियों के लिए दवाइयों, पैथोलॉजी व किताबों पर 15-25% विशेष छूट।' : 'Verified local pharmacies, labs & bookstores offering exclusive commuter discounts.'}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-xs sm:text-sm font-black text-emerald-950">
+                    {isHindi ? 'स्थानीय व्यापार व क्लीनिक पार्टनर नेटवर्क' : 'Local Business & Clinic Partner Network'}
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                    ₹19 / 3 {isHindi ? 'महीने' : 'Months'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-800 mt-0.5">
+                  {isHindi 
+                    ? 'मात्र ₹19 में 3 महीने के लिए दुकान लिस्ट करें व यात्रियों को 15-25% छूट दें (हर 3 माह में ₹19 में रिन्यू)।' 
+                    : 'List your shop/clinic for just ₹19 for 3 full months & reach thousands of city commuters.'}
                 </p>
               </div>
             </div>
 
             <button
-              onClick={onOpenStoreModal}
-              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0 flex items-center gap-1"
+              onClick={() => onOpenStoreModal()}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{isHindi ? 'अपनी दुकान जोड़ें' : 'Add Your Business'}</span>
+              <Plus className="w-4 h-4" />
+              <span>{isHindi ? 'दुकान जोड़ें (₹19 / 3 माह)' : 'Add Shop (₹19 / 3 Mo)'}</span>
             </button>
           </div>
 
@@ -2074,12 +2095,15 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {store.isPromoted && (
-                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
-                            ⭐ {store.promotedBadge || 'प्रमोटेड पार्टनर'}
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1">
+                            ⭐ {store.promotedBadge || (isHindi ? 'वेरिफाइड (3 माह)' : 'Verified (3 Mo)')}
                           </span>
                         )}
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
                           {store.category.replace('_', ' ')}
+                        </span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200/80">
+                          ₹19 / 3 {isHindi ? 'माह प्लान' : 'Mo Plan'}
                         </span>
                       </div>
                       <h3 className="font-extrabold text-slate-900 text-sm sm:text-base mt-1.5">
@@ -2119,7 +2143,7 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Actions & Renewal Button */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 flex-wrap">
                   {(store.category === 'clinic_pharmacy' || store.category === 'diagnostic_lab') ? (
                     <button
@@ -2139,13 +2163,15 @@ export const CityServicesDirectory: React.FC<CityServicesDirectoryProps> = ({
                     </a>
                   )}
 
-                  <a
-                    href={`tel:${store.phone}`}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  {/* Renew Listing Button */}
+                  <button
+                    onClick={() => onOpenStoreModal(store)}
+                    className="px-2.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    title={isHindi ? '3 महीने के लिए ₹19 में लिस्टिंग रिन्यू करें' : 'Renew listing for ₹19 for 3 months'}
                   >
-                    <Phone className="w-3.5 h-3.5 text-slate-600" />
-                    <span>{isHindi ? 'फोन' : 'Call'}</span>
-                  </a>
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+                    <span>{isHindi ? 'रिन्यू (₹19)' : 'Renew (₹19)'}</span>
+                  </button>
 
                   <button
                     onClick={() => handleNavigate(store.lat, store.lng, store.businessName)}

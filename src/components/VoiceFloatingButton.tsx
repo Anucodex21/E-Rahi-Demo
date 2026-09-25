@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { AppLanguage } from "../types";
+import { Mic } from "lucide-react";
 
 interface VoiceFloatingButtonProps {
   language: AppLanguage;
@@ -7,76 +8,192 @@ interface VoiceFloatingButtonProps {
 }
 
 /**
- * Floating Action Button: Google-Grade AI Voice Assistant
- * Gives users quick, familiar 1-tap voice access anywhere on mobile and desktop.
+ * Floating Action Button: Premium Circular Rahi Assistant
+ * GPU-accelerated frictionless drag with magnetic edge docking & executive finish.
  */
 export const VoiceFloatingButton: React.FC<VoiceFloatingButtonProps> = ({
   language,
   onClick,
 }) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const posRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragStartRef = useRef<{
+    startX: number;
+    startY: number;
+    buttonX: number;
+    buttonY: number;
+    moved: boolean;
+  }>({
+    startX: 0,
+    startY: 0,
+    buttonX: 0,
+    buttonY: 0,
+    moved: false,
+  });
+
+  // Initialize position in bottom-right corner safely
+  useEffect(() => {
+    const updateDefaultPos = () => {
+      const buttonSize = 58;
+      const margin = 20;
+      const defaultX = Math.max(margin, window.innerWidth - buttonSize - margin);
+      // Position above bottom tab bar on mobile, comfortable bottom-right on desktop
+      const defaultY = Math.max(80, window.innerHeight - buttonSize - (window.innerWidth < 768 ? 96 : 36));
+      setPosition({ x: defaultX, y: defaultY });
+      posRef.current = { x: defaultX, y: defaultY };
+    };
+
+    updateDefaultPos();
+    window.addEventListener("resize", updateDefaultPos);
+    return () => window.removeEventListener("resize", updateDefaultPos);
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      buttonX: rect.left,
+      buttonY: rect.top,
+      moved: false,
+    };
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    if (buttonRef.current) {
+      buttonRef.current.style.transition = "none";
+    }
+
+    buttonRef.current.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDraggingRef.current || !buttonRef.current) return;
+    const deltaX = e.clientX - dragStartRef.current.startX;
+    const deltaY = e.clientY - dragStartRef.current.startY;
+
+    if (!dragStartRef.current.moved && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
+      dragStartRef.current.moved = true;
+    }
+
+    if (dragStartRef.current.moved) {
+      const buttonSize = 58;
+      const nextX = Math.min(
+        Math.max(8, dragStartRef.current.buttonX + deltaX),
+        window.innerWidth - buttonSize - 8
+      );
+      const nextY = Math.min(
+        Math.max(64, dragStartRef.current.buttonY + deltaY),
+        window.innerHeight - buttonSize - 20
+      );
+
+      posRef.current = { x: nextX, y: nextY };
+      // Direct GPU transform bypasses React render cycle for instant 120fps fluid response
+      buttonRef.current.style.transform = `translate3d(${nextX}px, ${nextY}px, 0)`;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+
+    try {
+      buttonRef.current?.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    // Tap/Click without drag opens assistant
+    if (!dragStartRef.current.moved) {
+      onClick();
+      return;
+    }
+
+    // Professional magnetic edge docking
+    const buttonSize = 58;
+    const edgeMargin = 16;
+    const currentX = posRef.current.x;
+    const currentY = posRef.current.y;
+
+    const isLeftHalf = currentX + buttonSize / 2 < window.innerWidth / 2;
+    const targetX = isLeftHalf ? edgeMargin : window.innerWidth - buttonSize - edgeMargin;
+
+    // Keep within safe vertical bounds (below top navbar and above bottom mobile tab bar)
+    const minY = 72;
+    const maxY = window.innerHeight - buttonSize - (window.innerWidth < 768 ? 96 : 32);
+    const targetY = Math.min(Math.max(minY, currentY), Math.max(minY, maxY));
+
+    posRef.current = { x: targetX, y: targetY };
+    setPosition({ x: targetX, y: targetY });
+
+    if (buttonRef.current) {
+      buttonRef.current.style.transition =
+        "transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.15), box-shadow 0.25s ease, filter 0.25s ease";
+      buttonRef.current.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
-      className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 group flex items-center gap-2.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white/95 backdrop-blur-md text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.18)] border border-slate-200/90 hover:border-slate-300 hover:scale-[1.03] active:scale-95 transition-all duration-200 cursor-pointer ring-1 ring-slate-900/5"
+      ref={buttonRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      style={{
+        left: 0,
+        top: 0,
+        transform: position
+          ? `translate3d(${position.x}px, ${position.y}px, 0)`
+          : "translate3d(calc(100vw - 76px), calc(100vh - 140px), 0)",
+        touchAction: "none",
+        willChange: isDragging ? "transform" : "auto",
+      }}
+      className={`fixed z-50 group flex items-center justify-center w-[54px] h-[54px] sm:w-[58px] sm:h-[58px] rounded-full select-none cursor-grab active:cursor-grabbing ${
+        isDragging
+          ? "scale-[1.08] shadow-[0_20px_40px_-4px_rgba(245,158,11,0.45),0_12px_24px_-4px_rgba(0,0,0,0.25)] ring-4 ring-amber-400/40"
+          : "hover:scale-[1.05] active:scale-[0.96] shadow-[0_12px_32px_-4px_rgba(245,158,11,0.32),0_6px_16px_-2px_rgba(0,0,0,0.12)] hover:shadow-[0_16px_38px_-4px_rgba(245,158,11,0.42),0_8px_20px_-2px_rgba(0,0,0,0.16)]"
+      }`}
       title={
         language === "hi"
-          ? "गूगल वॉयस असिस्टेंट • बोलकर खोजें (Google Voice Search)"
-          : "Voice Assistant • Search with voice like Google"
+          ? "राही असिस्टेंट • बोलकर पूछें (स्क्रीन पर कहीं भी ड्रैग करें)"
+          : "Rahi Assistant • Tap to speak (Drag freely anywhere)"
       }
-      aria-label="Google Voice Assistant"
+      aria-label="Rahi Assistant"
     >
-      {/* Google 4-Color Voice Mic Icon */}
-      <div className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 border border-slate-100 shadow-2xs group-hover:bg-slate-100 transition-colors shrink-0">
-        <svg
-          className="w-4 h-4 sm:w-4.5 sm:h-4.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z"
-            fill="#4285F4"
-          />
-          <path
-            d="M15.9 8.1C15.5 8.1 15.2 8.4 15.2 8.8V11C15.2 12.77 13.77 14.2 12 14.2C10.23 14.2 8.8 12.77 8.8 11V8.8C8.8 8.4 8.5 8.1 8.1 8.1C7.7 8.1 7.4 8.4 7.4 8.8V11C7.4 13.3 9.1 15.2 11.3 15.5V19H9.5C9.1 19 8.8 19.3 8.8 19.7C8.8 20.1 9.1 20.4 9.5 20.4H14.5C14.9 20.4 15.2 20.1 15.2 19.7C15.2 19.3 14.9 19 14.5 19H12.7V15.5C14.9 15.2 16.6 13.3 16.6 11V8.8C16.6 8.4 16.3 8.1 15.9 8.1Z"
-            fill="#34A853"
-          />
-          <path
-            d="M7.4 11C7.4 12.27 7.91 13.42 8.74 14.25L9.73 13.26C9.14 12.68 8.8 11.88 8.8 11H7.4Z"
-            fill="#FBBC05"
-          />
-          <path
-            d="M16.6 11H15.2C15.2 11.88 14.86 12.68 14.27 13.26L15.26 14.25C16.09 13.42 16.6 12.27 16.6 11Z"
-            fill="#EA4335"
-          />
-        </svg>
-        {/* Active pulse */}
-        <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4285F4] opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4285F4]"></span>
-        </span>
-      </div>
+      {/* Outer Glow Halo Ring */}
+      <span className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 opacity-90 group-hover:opacity-100 transition-opacity blur-[1px]"></span>
 
-      {/* Text & Google 4-Color Waveform */}
-      <div className="flex flex-col items-start text-left pr-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs sm:text-sm font-semibold tracking-tight text-slate-800 group-hover:text-slate-900 transition-colors">
-            {language === "hi" ? "आवाज़ से पूछें" : "Voice Assistant"}
-          </span>
-          {/* Google Assistant 4 colored bouncing dots */}
-          <div className="flex items-center gap-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4] animate-bounce [animation-delay:-0.3s]"></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#EA4335] animate-bounce [animation-delay:-0.15s]"></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FBBC05] animate-bounce [animation-delay:0s]"></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34A853] animate-bounce [animation-delay:0.15s]"></span>
-          </div>
-        </div>
-        <span className="text-[10px] text-slate-500 font-medium hidden sm:inline-block">
-          {language === "hi"
-            ? "गूगल वॉइस • रूट व किराया"
-            : "Google-style voice search"}
+      {/* Main Glassmorphic Circular Body */}
+      <div className="relative w-full h-full rounded-full bg-white p-1 border-2 border-white/90 shadow-inner flex items-center justify-center overflow-hidden">
+        {/* Crisp App Logo */}
+        <img
+          src="/icon.svg"
+          alt="Rahi Assistant Logo"
+          className="w-full h-full object-cover rounded-full pointer-events-none drop-shadow-xs"
+          draggable={false}
+        />
+
+        {/* Subtle Specular Glass Highlight */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/35 via-transparent to-black/10 pointer-events-none" />
+
+        {/* Live Active Voice Status Dot */}
+        <span className="absolute top-1 right-1 flex h-2.5 w-2.5 pointer-events-none">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-white shadow-2xs"></span>
         </span>
+
+        {/* Micro Voice Mic Indicator Badge */}
+        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-900 border-1.5 border-white text-amber-400 flex items-center justify-center shadow-md pointer-events-none group-hover:scale-110 transition-transform">
+          <Mic className="w-2.5 h-2.5 stroke-[2.5]" />
+        </div>
       </div>
     </button>
   );
 };
+
+
+

@@ -416,7 +416,12 @@ export const SAMPLE_LOCAL_STORES: LocalStoreClinic[] = [
     cityName: 'Bareilly',
     discountOffer: '15% Flat Discount on Generic Medicines & Baby Food for E-Rahi Users',
     isPromoted: true,
-    promotedBadge: 'Verified Health Partner'
+    promotedBadge: 'वेरिफाइड पार्टनर (3 माह)',
+    listingFeePaid: 19,
+    validityMonths: 3,
+    listedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 75 * 86400000).toISOString(),
+    listingStatus: 'active'
   },
   {
     id: 'store-student-book-depot',
@@ -432,7 +437,12 @@ export const SAMPLE_LOCAL_STORES: LocalStoreClinic[] = [
     cityName: 'Bareilly',
     discountOffer: '20% Off on NCERT, Lucent & Competition Test Series with E-Rahi pass',
     isPromoted: true,
-    promotedBadge: 'Top Student Hub'
+    promotedBadge: 'वेरिफाइड पार्टनर (3 माह)',
+    listingFeePaid: 19,
+    validityMonths: 3,
+    listedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 60 * 86400000).toISOString(),
+    listingStatus: 'active'
   },
   {
     id: 'store-sharma-ev-battery',
@@ -448,7 +458,12 @@ export const SAMPLE_LOCAL_STORES: LocalStoreClinic[] = [
     cityName: 'Bareilly',
     discountOffer: '₹30 Fast Swap for E-Rahi Drivers + Free Tyre Air Check',
     isPromoted: true,
-    promotedBadge: 'Official Driver Station'
+    promotedBadge: 'वेरिफाइड पार्टनर (3 माह)',
+    listingFeePaid: 19,
+    validityMonths: 3,
+    listedAt: new Date(Date.now() - 45 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 45 * 86400000).toISOString(),
+    listingStatus: 'active'
   },
   {
     id: 'store-life-care-pathology',
@@ -463,7 +478,13 @@ export const SAMPLE_LOCAL_STORES: LocalStoreClinic[] = [
     lng: 79.4185,
     cityName: 'Bareilly',
     discountOffer: 'Free Blood Sugar & BP check + 25% off on Full Body Health Checkup',
-    isPromoted: false
+    isPromoted: true,
+    promotedBadge: 'वेरिफाइड पार्टनर (3 माह)',
+    listingFeePaid: 19,
+    validityMonths: 3,
+    listedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+    expiresAt: new Date(Date.now() + 80 * 86400000).toISOString(),
+    listingStatus: 'active'
   }
 ];
 

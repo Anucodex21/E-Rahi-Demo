@@ -60,7 +60,7 @@ import { CitizenComplaintModal } from "./components/CitizenComplaintModal";
 import { MobileAppInstallModal } from "./components/MobileAppInstallModal";
 
 // Essential Icons
-import { MapPin, ShieldAlert, HelpCircle } from "lucide-react";
+import { MapPin, ShieldAlert, HelpCircle, Flame, Zap } from "lucide-react";
 
 export default function App() {
   // ==========================================
@@ -149,6 +149,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
+  const [storeToRenew, setStoreToRenew] = useState<LocalStoreClinic | null>(null);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isFareModalOpen, setIsFareModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -525,6 +526,34 @@ export default function App() {
     }
   };
 
+  const handleOpenStoreModal = (store?: LocalStoreClinic) => {
+    setStoreToRenew(store || null);
+    setIsStoreModalOpen(true);
+  };
+
+  const handleRenewStore = (storeId: string) => {
+    setPromotedStores((prev) => {
+      const updated = prev.map((s) => {
+        if (s.id === storeId) {
+          const newExp = new Date();
+          newExp.setMonth(newExp.getMonth() + 3);
+          return {
+            ...s,
+            isPromoted: true,
+            expiresAt: newExp.toISOString(),
+            listingStatus: 'active' as const,
+            validityMonths: (s.validityMonths || 0) + 3,
+          };
+        }
+        return s;
+      });
+      try {
+        localStorage.setItem("erahi_custom_stores", JSON.stringify(updated.filter((s) => s.id.startsWith("store-user-"))));
+      } catch {}
+      return updated;
+    });
+  };
+
   const handleAddNewStore = (newStore: LocalStoreClinic) => {
     setPromotedStores((prev) => {
       const updated = [newStore, ...prev];
@@ -576,8 +605,8 @@ export default function App() {
       />
 
       {/* 4 Dedicated Search Bars: State ➔ City ➔ From ➔ To */}
-      {(desktopView === "navigator" || desktopView === "fare") &&
-        ["map", "route", "cockpit", "fare"].includes(activeMobileTab) && (
+      {desktopView === "navigator" &&
+        ["map", "route", "cockpit"].includes(activeMobileTab) && (
           <StateCitySelector
             selectedStateId={selectedStateId}
             selectedCityId={selectedCityId}
@@ -601,31 +630,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4">
-        {/* Mobile Commuter / Driver Mode Switcher */}
-        {["map", "route", "cockpit", "fare"].includes(activeMobileTab) && (
-          <div className="lg:hidden mb-3">
-            <div className="flex items-center bg-white p-1 rounded-xl border border-slate-200 shadow-xs mb-2">
-              <button
-                onClick={() => setUserMode("commuter")}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center gap-1.5 ${
-                  userMode === "commuter" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600"
-                }`}
-              >
-                <span>🚶</span>
-                <span>{t.commuterMode}</span>
-              </button>
-              <button
-                onClick={() => setUserMode("driver")}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center gap-1.5 ${
-                  userMode === "driver" ? "bg-amber-500 text-white shadow-xs" : "text-slate-600"
-                }`}
-              >
-                <span>🛺</span>
-                <span>{t.driverMode}</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* View Routing: SOS Hub | Services Hub | Fare Rates Hub | Roadmap | Dual-Pane Transit */}
         {(desktopView === "sos" && window.innerWidth >= 1024) || activeMobileTab === "sos" ? (
@@ -662,7 +666,7 @@ export default function App() {
               userGpsLocation={userGpsLocation}
               isPremium={isPremiumPass}
               onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
-              onOpenStoreModal={() => setIsStoreModalOpen(true)}
+              onOpenStoreModal={handleOpenStoreModal}
               hospitals={SAMPLE_HOSPITALS}
               hotels={SAMPLE_HOTELS}
               colleges={SAMPLE_COLLEGES}
@@ -865,39 +869,45 @@ export default function App() {
             >
               {(activeMobileTab === "map" || window.innerWidth >= 1024) && (
                 <div className="space-y-2">
-                  {/* Map Layer Controls Bar */}
-                  <div className="bg-white rounded-xl border border-slate-200 p-2.5 shadow-xs flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                      <span className="font-bold text-slate-800">
-                        {currentCity.name} {language === "hi" ? "मानचित्र" : "Map"}
-                      </span>
-                      <span className="hidden sm:inline text-slate-400 text-[11px] font-medium">
-                        • {currentCity.locations.slice(0, 3).map((l) => l.name.split(" ")[0]).join(" / ")}
-                      </span>
+                  {/* Map Layer Controls Bar - Professional Modern Toolbar */}
+                  <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 p-2 sm:p-2.5 shadow-2xs flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-bold text-slate-900 tracking-tight">
+                          {currentCity.name} {language === "hi" ? "मानचित्र" : "Map"}
+                        </span>
+                        <span className="hidden sm:inline text-slate-400 text-[11px] font-normal">
+                          • {currentCity.locations.slice(0, 3).map((l) => l.name.split(" ")[0]).join(" · ")}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => setShowHeatmap(!showHeatmap)}
-                        className={`text-[11px] font-semibold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs select-none ${
                           showHeatmap
-                            ? "bg-amber-100 text-amber-900 border-amber-300"
-                            : "bg-slate-50 text-slate-600 border-slate-200"
+                            ? "bg-slate-900 text-amber-300 border-slate-900"
+                            : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
                         }`}
                       >
-                        🔥 {language === "hi" ? "जाम हीटमैप" : "Choke Heat"}
+                        <Flame className={`w-3.5 h-3.5 ${showHeatmap ? "text-amber-400" : "text-slate-500"}`} />
+                        <span>{language === "hi" ? "जाम हीटमैप" : "Choke Heat"}</span>
                       </button>
 
                       <button
                         onClick={() => setShowChargingStations(!showChargingStations)}
-                        className={`text-[11px] font-semibold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs select-none ${
                           showChargingStations
-                            ? "bg-emerald-100 text-emerald-900 border-emerald-300"
-                            : "bg-slate-50 text-slate-600 border-slate-200"
+                            ? "bg-slate-900 text-emerald-300 border-slate-900"
+                            : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
                         }`}
                       >
-                        ⚡ {language === "hi" ? "चार्जिंग हब" : "EV Hubs"}
+                        <Zap className={`w-3.5 h-3.5 ${showChargingStations ? "text-emerald-400" : "text-slate-500"}`} />
+                        <span>{language === "hi" ? "चार्जिंग हब" : "EV Hubs"}</span>
                       </button>
                     </div>
                   </div>
@@ -1083,8 +1093,13 @@ export default function App() {
       {/* Store Listing Modal */}
       <StorePromotionModal
         isOpen={isStoreModalOpen}
-        onClose={() => setIsStoreModalOpen(false)}
+        onClose={() => {
+          setIsStoreModalOpen(false);
+          setStoreToRenew(null);
+        }}
         onAddStore={handleAddNewStore}
+        onRenewStore={handleRenewStore}
+        storeToRenew={storeToRenew}
         cityName={currentCity.name}
         language={language}
       />

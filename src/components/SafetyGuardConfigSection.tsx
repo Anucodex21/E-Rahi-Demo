@@ -236,12 +236,8 @@ export const SafetyGuardConfigSection: React.FC<SafetyGuardConfigSectionProps> =
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                {isHindi ? '🛡️ सेफ्टी गार्ड (Safety Guard) कॉन्फ़िगरेशन' : '🛡️ Safety Guard Configuration'}
+                {isHindi ? '🛡️ सेफ्टी गार्ड (Safety Guard)' : '🛡️ Safety Guard'}
               </h3>
-              <span className="inline-flex items-center gap-1 text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                <Lock className="w-3 h-3 text-emerald-600" />
-                <span>{isHindi ? 'स्थायी स्टोरेज (Persistent)' : 'Persistent Storage'}</span>
-              </span>
             </div>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
               {isHindi
@@ -447,20 +443,7 @@ export const SafetyGuardConfigSection: React.FC<SafetyGuardConfigSectionProps> =
           </div>
         </form>
 
-        {/* Persistence & Crash-Resilience Explanation Note */}
-        <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80 text-slate-700 text-xs flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-bold text-amber-950 text-[11px]">
-              {isHindi ? '🔒 रीबूट एवं क्रैश सुरक्षा गारंटी:' : '🔒 Reboot & Crash Durability:'}
-            </p>
-            <p className="text-[11px] text-slate-600 leading-relaxed">
-              {isHindi
-                ? 'यह विवरण ब्राउज़र के सुरक्षित LocalStorage में सुरक्षित रहता है। यदि आपका फोन डिस्चार्ज होकर बंद हो जाए, ऐप बंद हो जाए या फोन रीस्टार्ट हो, तब भी आपका यह संपर्क सुरक्षित रहेगा और ऑटो-प्रेषण चालू रहेगा।'
-                : 'Your contact info is preserved permanently in device storage. It persists safely through low-battery shut-offs, browser restarts, and app reloads.'}
-            </p>
-          </div>
-        </div>
+
       </div>
     </div>
   );

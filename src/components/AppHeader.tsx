@@ -109,10 +109,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   {currentCity.name}
                 </span>
               </h1>
-              <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Grid
-              </span>
             </div>
           </div>
         </div>
@@ -419,74 +415,29 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             )}
           </div>
 
-          {/* Trilingual Language Switcher */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80 text-[11px] font-semibold">
-            <button
-              onClick={() => onSetLanguage("en")}
-              className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-                language === "en"
-                  ? "bg-white text-slate-900 font-bold shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => onSetLanguage("hi")}
-              className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-                language === "hi"
-                  ? "bg-white text-slate-900 font-bold shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              हिं
-            </button>
-            <button
-              onClick={() => onSetLanguage("ur")}
-              className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-                language === "ur"
-                  ? "bg-white text-slate-900 font-bold shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              اردو
-            </button>
-          </div>
-
-          {/* Quick Voice Mic in Header */}
+          {/* Single Language Switcher Pill (Click or double-click to toggle language) */}
           <button
-            onClick={onOpenVoiceModal}
-            className="flex items-center justify-center p-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 shadow-2xs transition-colors cursor-pointer min-h-[36px] min-w-[36px]"
+            onClick={() => {
+              const next: Record<AppLanguage, AppLanguage> = { en: "hi", hi: "ur", ur: "en" };
+              onSetLanguage(next[language] || "en");
+            }}
+            onDoubleClick={() => {
+              const next: Record<AppLanguage, AppLanguage> = { en: "hi", hi: "ur", ur: "en" };
+              onSetLanguage(next[language] || "en");
+            }}
             title={
-              isHindi
-                ? "गूगल वॉयस असिस्टेंट • बोलकर पूछें"
-                : "Google Voice Assistant"
+              language === "en"
+                ? "Language: EN (Click/double-click to switch to हिन्दी)"
+                : language === "hi"
+                  ? "भाषा: हिन्दी (Click to switch to اردو)"
+                  : "زبان: اردو (Click to switch to English)"
             }
-            aria-label="Google Voice Assistant"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200/80 text-xs font-bold transition-all active:scale-95 cursor-pointer min-h-[36px] flex items-center gap-1 shadow-2xs select-none"
           >
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z"
-                fill="#4285F4"
-              />
-              <path
-                d="M15.9 8.1C15.5 8.1 15.2 8.4 15.2 8.8V11C15.2 12.77 13.77 14.2 12 14.2C10.23 14.2 8.8 12.77 8.8 11V8.8C8.8 8.4 8.5 8.1 8.1 8.1C7.7 8.1 7.4 8.4 7.4 8.8V11C7.4 13.3 9.1 15.2 11.3 15.5V19H9.5C9.1 19 8.8 19.3 8.8 19.7C8.8 20.1 9.1 20.4 9.5 20.4H14.5C14.9 20.4 15.2 20.1 15.2 19.7C15.2 19.3 14.9 19 14.5 19H12.7V15.5C14.9 15.2 16.6 13.3 16.6 11V8.8C16.6 8.4 16.3 8.1 15.9 8.1Z"
-                fill="#34A853"
-              />
-              <path
-                d="M7.4 11C7.4 12.27 7.91 13.42 8.74 14.25L9.73 13.26C9.14 12.68 8.8 11.88 8.8 11H7.4Z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M16.6 11H15.2C15.2 11.88 14.86 12.68 14.27 13.26L15.26 14.25C16.09 13.42 16.6 12.27 16.6 11Z"
-                fill="#EA4335"
-              />
-            </svg>
+            <span className="text-slate-500 text-[11px]">🌐</span>
+            <span className="uppercase font-extrabold tracking-wider">
+              {language === "en" ? "EN" : language === "hi" ? "हिं" : "اردو"}
+            </span>
           </button>
 
           {/* User Account / Login & Profile */}
@@ -499,9 +450,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <span className="text-sm">{currentUser.avatar}</span>
               <span className="hidden sm:inline font-semibold max-w-[85px] truncate">
                 {currentUser.name.split(" ")[0]}
-              </span>
-              <span className="text-[10px] bg-slate-100 text-slate-700 font-medium px-1 rounded-full">
-                ⭐{currentUser.reputationPoints}
               </span>
             </button>
           ) : (

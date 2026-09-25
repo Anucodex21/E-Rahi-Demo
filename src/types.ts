@@ -301,6 +301,12 @@ export interface LocalStoreClinic {
   discountOffer?: string; // e.g. "15% off on generic medicines for E-Rahi users"
   isPromoted: boolean;
   promotedBadge?: string; // e.g. 'Featured Local Partner'
+  listingFeePaid?: number; // 19
+  validityMonths?: number; // 3 months
+  listedAt?: string; // ISO date string
+  expiresAt?: string; // ISO date string (3 months from listedAt)
+  listingStatus?: 'active' | 'renewal_due' | 'expired';
+  paymentUpiRef?: string;
 }
 
 export interface CollegeUniversity {

@@ -311,7 +311,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
     );
   };
 
-  // 3. Check If Device Powered Back On from previous shutdown OR auto-dispatch on app open
+  // 3. Device status check (NO automatic background message sending without user SOS action)
   const checkDevicePowerRestored = () => {
     const wasShutdown = localStorage.getItem('erahi_was_pre_shutdown');
     if (wasShutdown === 'true' && !restoredEventHandled) {
@@ -327,23 +327,6 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
             batteryLevel: powerState.batteryLevel
           })
         }).catch(e => console.warn(e));
-
-        // Automatic dispatch to selected contact as soon as phone turns back on
-        if (autoDispatchOnPowerOn) {
-          const targetContact = primaryContact || contacts[0];
-          if (targetContact) {
-            handleSendDeviceRestoredUpdate(targetContact, freshCoords);
-          }
-        }
-      });
-    } else if (autoDispatchOnPowerOn && !hasAutoDispatchedOnMountRef.current) {
-      // Automatic live location dispatch when app turns on (app on hote hi live location share)
-      hasAutoDispatchedOnMountRef.current = true;
-      fetchLiveGps((freshCoords) => {
-        const targetContact = primaryContact || contacts[0];
-        if (targetContact) {
-          handleSendDeviceRestoredUpdate(targetContact, freshCoords);
-        }
       });
     }
   };
@@ -1018,149 +1001,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
 
       {/* 2. EMERGENCY ALERTS / ACTIVE BANNERS */}
 
-      {/* REAL-TIME AUTO-DISPATCH CONFIRMATION BANNER */}
-      {autoDispatchNotification && (
-        <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-2xs text-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in slide-in-from-top duration-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold shrink-0">
-              {autoDispatchNotification.type === 'switch_off' ? (
-                <PowerOff className="w-5 h-5 text-amber-600" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              )}
-            </div>
-            <div>
-              <div className="font-bold text-sm text-slate-900 flex items-center gap-2 flex-wrap">
-                <span>
-                  {autoDispatchNotification.type === 'switch_off'
-                    ? (isHindi ? '⚡ फोन स्विच-ऑफ: अंतिम लोकेशन स्वतः भेजी गई!' : '⚡ Pre-Shutdown: Last Location Auto-Sent!')
-                    : (isHindi ? '✅ फोन ऑन हुआ: नई लाइव लोकेशन स्वतः भेजी गई!' : '✅ Phone Powered On: Live Location Auto-Sent!')
-                  }
-                </span>
-                <span className="text-[10px] bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-mono font-medium">
-                  {autoDispatchNotification.time}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {isHindi
-                  ? `प्राप्तकर्ता: ${autoDispatchNotification.contactName} (${autoDispatchNotification.phone}) • WhatsApp पर Google Maps लिंक प्रेषित।`
-                  : `Delivered to: ${autoDispatchNotification.contactName} (${autoDispatchNotification.phone}) via WhatsApp with Maps link.`
-                }
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <button
-              onClick={() => {
-                if (autoDispatchNotification.contactPhone && autoDispatchNotification.rawMessage) {
-                  openWhatsAppDirect(autoDispatchNotification.contactPhone, autoDispatchNotification.rawMessage);
-                } else {
-                  handleShareLiveLocationWhatsApp(false);
-                }
-              }}
-              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>{isHindi ? 'WhatsApp खोलें' : 'Open WhatsApp'}</span>
-            </button>
-            <a
-              href={autoDispatchNotification.googleMapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold text-xs shadow-2xs flex items-center gap-1.5"
-            >
-              <MapPin className="w-3.5 h-3.5 text-rose-600" />
-              <span>{isHindi ? 'नक्शा देखें' : 'View Pin'}</span>
-            </a>
-            <button
-              onClick={() => setAutoDispatchNotification(null)}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg text-xs cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* A. DEVICE POWER RESTORED / TURNED BACK ON BANNER */}
-      {isDeviceRestoredBanner && (
-        <div className="p-4 rounded-2xl bg-white border border-emerald-200 text-slate-900 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in slide-in-from-top duration-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold shrink-0">
-              <Power className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <div className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-                <span>{isHindi ? '✅ फोन पुनः ऑन (Switch On) हुआ!' : '✅ Phone Powered Back On / Online!'}</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {isHindi 
-                  ? 'आपकी लाइव लोकेशन अपडेट हो गई है। अपने पति/परिवार को सूचना भेजें कि फोन चालू हो गया है।' 
-                  : 'Live GPS fix updated. Inform your emergency contacts that your phone is back online.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {primaryContact && (
-              <button
-                onClick={() => handleSendDeviceRestoredUpdate(primaryContact)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs cursor-pointer flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5 text-white" />
-                <span>{isHindi ? `WhatsApp पर ${primaryContact.name} को बताएं` : `Notify ${primaryContact.name}`}</span>
-              </button>
-            )}
-            <button
-              onClick={() => setIsDeviceRestoredBanner(false)}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg text-xs cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* B. ACTIVE SOS DANGER MODE BAR */}
-      {isSosActive && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-rose-600 text-white shadow-lg border-2 border-rose-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-pulse">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white text-rose-600 flex items-center justify-center font-black shrink-0 shadow-md">
-              <Flame className="w-7 h-7 text-rose-600 animate-bounce" />
-            </div>
-            <div>
-              <div className="font-black text-base flex items-center gap-2">
-                <span>{isHindi ? '🚨 आपातकालीन SOS सक्रिय है (DANGER MODE)' : '🚨 EMERGENCY SOS ACTIVE'}</span>
-              </div>
-              <p className="text-xs text-rose-100 mt-0.5">
-                {isHindi 
-                  ? 'लाइव लोकेशन प्रेषित! सहायता पहुंचने तक सुरक्षित स्थान पर रहें।' 
-                  : 'Live location dispatched. Stay in a safe, well-lit location until help arrives.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleToggleSiren}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                isSirenActive ? 'bg-amber-400 text-slate-900' : 'bg-rose-700 text-white border border-rose-400'
-              }`}
-            >
-              <Volume2 className="w-4 h-4" />
-              <span>{isSirenActive ? (isHindi ? 'सायरन बंद' : 'Stop Siren') : (isHindi ? 'लाउड सायरन' : 'Play Siren')}</span>
-            </button>
-
-            <button
-              onClick={handleDeactivateSos}
-              className="px-4 py-2 rounded-xl bg-white text-rose-700 text-xs font-bold shadow-md hover:bg-rose-50 cursor-pointer"
-            >
-              {isHindi ? 'सुरक्षित हूँ (Cancel SOS)' : 'I am Safe (Deactivate)'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* C. 3-SECOND SOS COUNTDOWN OVERLAY (PREVENTS ACCIDENTAL TRIGGERS) */}
       {isSosArmed && (
@@ -1287,10 +1128,10 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
           <div className="lg:col-span-7 space-y-4">
             
             {/* BIG SOS CARD - ENTERPRISE GRADE SAFETY COCKPIT */}
-            <div className="p-5 sm:p-7 bg-gradient-to-b from-rose-50 via-pink-50/30 to-white rounded-2xl border-2 border-rose-200 shadow-sm space-y-5">
+            <div className="p-5 sm:p-6 bg-gradient-to-b from-rose-50/90 via-slate-50/50 to-white rounded-2xl border border-rose-200/90 shadow-2xs space-y-5">
               
               {/* Header & Guardian Status Badge */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-rose-100 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-rose-100/80 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   <span className="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
@@ -1321,26 +1162,26 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                 <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
                   {isHindi ? 'संकट में हैं? तुरंत SOS दबाएं' : 'In Danger? Trigger Instant SOS'}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-600 font-medium">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
                   {isHindi 
-                    ? `बटन दबाते ही आपकी लाइव GPS लोकेशन Google Maps लिंक के साथ ${primaryContact ? primaryContact.name : 'आपके पति'} को WhatsApp पर तुरंत भेजी जाएगी।`
-                    : `Dispatches your live GPS coordinates with Google Maps pin directly to ${primaryContact ? primaryContact.name : 'your husband/guardians'} via WhatsApp.`}
+                    ? `जब आप SOS बटन दबाते हैं, केवल तभी आपकी सटीक लाइव GPS लोकेशन और Google Maps लिंक तुरंत ${primaryContact ? primaryContact.name : 'आपके पति/परिजनों'} को WhatsApp पर भेजी जाएगी।`
+                    : `Your live GPS location and Google Maps link will be automatically sent to ${primaryContact ? primaryContact.name : 'your guardian'} only when you press this SOS button.`}
                 </p>
               </div>
 
               {/* TACTILE SOS BUTTON WITH CONCENTRIC RADAR RINGS */}
               <div className="flex flex-col items-center justify-center py-2 space-y-3">
                 <div className="relative flex items-center justify-center">
-                  <div className="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-rose-100/70 animate-ping pointer-events-none opacity-40" />
+                  <div className="absolute w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-rose-200/50 animate-ping pointer-events-none opacity-30" />
                   <button
                     onClick={handleStartSosArm}
                     disabled={isSosArmed || isSosActive}
-                    className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-full bg-gradient-to-tr from-rose-700 via-rose-600 to-rose-500 text-white shadow-2xl hover:shadow-rose-300 border-4 border-white active:scale-95 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group select-none ring-8 ring-rose-200/90 hover:ring-rose-300"
-                    title="Press to arm SOS (3s safety window)"
+                    className="relative w-40 h-40 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-rose-700 via-rose-600 to-rose-500 text-white shadow-xl hover:shadow-rose-300 border-4 border-white active:scale-95 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group select-none ring-8 ring-rose-200/90 hover:ring-rose-300"
+                    title="Press to trigger emergency SOS"
                   >
-                    <ShieldAlert className="w-12 h-12 text-amber-300 group-hover:scale-110 transition-transform animate-pulse" />
-                    <span className="font-black text-3xl tracking-wider">SOS</span>
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-rose-100">
+                    <ShieldAlert className="w-11 h-11 text-amber-300 group-hover:scale-110 transition-transform animate-pulse" />
+                    <span className="font-black text-2xl sm:text-3xl tracking-wider">SOS</span>
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-rose-100">
                       {isHindi ? 'दबाएं (PRESS)' : 'EMERGENCY'}
                     </span>
                   </button>
@@ -1353,7 +1194,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
               </div>
 
               {/* DIRECT 1-TAP EMERGENCY DISPATCH ACTION GRID */}
-              <div className="pt-3 border-t border-rose-100 space-y-3">
+              <div className="pt-3 border-t border-rose-100/80 space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                   <span>{isHindi ? '1-क्लिक सीधा आपातकालीन प्रेषण:' : '1-Click Direct Emergency Dispatch:'}</span>
                   {primaryContact && (
@@ -1368,11 +1209,11 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                   {/* WhatsApp Live SOS to Guardian */}
                   <button
                     onClick={() => handleShareSosWhatsApp(false)}
-                    className="py-3 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
+                    className="py-2.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer active:scale-95"
                     title={isHindi ? 'WhatsApp पर लाइव लोकेशन व SOS आपातकालीन संदेश भेजें' : 'Send live location & SOS distress alert on WhatsApp'}
                   >
                     <Send className="w-4 h-4 text-white fill-white" />
-                    <span>
+                    <span className="truncate">
                       {primaryContact 
                         ? (isHindi ? `WhatsApp SOS: ${primaryContact.name}` : `WhatsApp SOS: ${primaryContact.name}`) 
                         : (isHindi ? 'WhatsApp लाइव SOS' : 'WhatsApp Live SOS')}
@@ -1382,7 +1223,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                   {/* Police 112 */}
                   <a
                     href="tel:112"
-                    className="py-3 px-3.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 text-center"
+                    className="py-2.5 px-3.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95 text-center"
                   >
                     <Phone className="w-4 h-4 text-amber-300" />
                     <span>{isHindi ? 'पुलिस 112 कॉल' : 'Call Police 112'}</span>
@@ -1391,7 +1232,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                   {/* Women Helpline 1090 */}
                   <a
                     href="tel:1090"
-                    className="py-3 px-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 text-center"
+                    className="py-2.5 px-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95 text-center"
                   >
                     <ShieldCheck className="w-4 h-4 text-rose-300" />
                     <span>{isHindi ? 'महिला हेल्पलाइन 1090' : 'Women Helpline 1090'}</span>
@@ -1404,210 +1245,6 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                     <span>{isHindi ? `✅ संदेश भेजा गया: ${lastDispatchedInfo}` : `✅ Message sent: ${lastDispatchedInfo}`}</span>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* "यह कैसे काम करता है?" - 3 SIMPLE STEPS EXPLANATION (ENTERPRISE / BIG COMPANY SAFETY STANDARD) */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wide">
-                  {isHindi ? 'यह कैसे काम करता है? (3 आसान चरण)' : 'How Professional SOS Works (3 Simple Steps)'}
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                  <div className="w-6 h-6 rounded-full bg-rose-600 text-white font-black text-xs flex items-center justify-center">
-                    1
-                  </div>
-                  <div className="font-bold text-slate-900 text-xs">
-                    {isHindi ? 'SOS बटन दबाएं' : 'Press SOS Button'}
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    {isHindi ? '3 सेकंड की उलटी गिनती शुरू होती है और फोन स्पष्ट हिंदी में बोलता है ताकि गलती से अलर्ट न जाए।' : 'Starts a 3s safety window with audible voice so you can cancel accidental presses.'}
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center">
-                    2
-                  </div>
-                  <div className="font-bold text-slate-900 text-xs">
-                    {isHindi ? 'पति को लोकेशन WhatsApp' : 'Live WhatsApp to Husband'}
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    {isHindi ? 'लाइव Google Maps पिन, निकटतम लैंडमार्क और बैटरी स्थिति आपके पति के WhatsApp पर स्वतः जाती है।' : 'Dispatches live Google Maps link, nearest landmark & battery level to your selected guardian.'}
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                  <div className="w-6 h-6 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center">
-                    3
-                  </div>
-                  <div className="font-bold text-slate-900 text-xs">
-                    {isHindi ? 'फोन स्विच-ऑफ सुरक्षा' : 'Pre-Shutdown Safeguard'}
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    {isHindi ? 'यदि फोन की बैटरी 5% हो या फोन बंद होने वाला हो, तो बंद होने से पहले अंतिम लोकेशन सुरक्षित हो जाती है।' : 'If battery reaches 5% or powers down, last location is safeguarded before switch-off.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* PRE-SHUTDOWN ("LAST GASP") & POWER-ON AUTOMATIC DISPATCH SAFEGUARD CARD */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-300 shadow-2xs space-y-3.5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                    <PowerOff className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h3 className="text-xs sm:text-sm font-black text-slate-900">
-                        {isHindi 
-                          ? '⚡ फोन स्विच-ऑफ एवं ऑन होने पर स्वतः लोकेशन प्रेषण' 
-                          : '⚡ Auto Location Dispatch on Phone Switch-Off & Power-On'}
-                      </h3>
-                      <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                        ACTIVE
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
-                      {isHindi 
-                        ? 'फोन की बैटरी खत्म/स्विच-ऑफ होने से ठीक पहले अंतिम लोकेशन, और फोन ऑन होते ही नई लाइव लोकेशन आपके पति को स्वतः WhatsApp पर पहुँच जाती है।' 
-                        : 'Automatically sends your last live GPS location to your husband before shutdown, and sends fresh location as soon as phone turns back on.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Target Guardian Info */}
-              <div className="bg-white p-3 rounded-xl border border-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                      {isHindi ? 'लोकेशन प्राप्तकर्ता (Selected Guardian):' : 'Receiving Contact:'}
-                    </div>
-                    <div className="font-bold text-slate-900 text-xs">
-                      {primaryContact ? (
-                        <span>{primaryContact.name} ({primaryContact.relationship || 'पति'}) • <span className="font-mono text-slate-600">{primaryContact.phone}</span></span>
-                      ) : (
-                        <span className="text-amber-700">{isHindi ? 'कोई नंबर नहीं चुना (कांटेक्ट टैब में पति का नंबर जोड़ें)' : 'No contact selected yet'}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <button
-                    onClick={() => {
-                      const el = document.getElementById('safety-guard-config-section');
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth' });
-                      } else {
-                        setActiveTab('contacts');
-                      }
-                    }}
-                    className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 text-[11px] font-bold rounded-lg border border-amber-300 transition-all cursor-pointer flex items-center gap-1"
-                  >
-                    <span>{isHindi ? '⚙️ नंबर बदलें / सेट करें' : '⚙️ Configure Guard'}</span>
-                  </button>
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                    <Send className="w-3 h-3 text-emerald-600" />
-                    <span>WhatsApp Direct</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dual Step Workflow: Before Switch Off & After Power On */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {/* 1. Before Switch-Off */}
-                <div className="p-3 bg-white rounded-xl border border-amber-200/90 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                      <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">1</span>
-                      <span>{isHindi ? 'स्विच-ऑफ से ठीक पहले' : 'Before Phone Powers Off'}</span>
-                    </div>
-                    <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                      बैटरी ≤ 5%
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-normal">
-                    {isHindi 
-                      ? 'फोन बंद होने से पहले अंतिम GPS पिन, निकटतम लैंडमार्क व बैटरी प्रतिशत स्वतः WhatsApp पर भेजा जाता है।' 
-                      : 'Captures final GPS fix, nearest landmark & battery level, auto-dispatches to husband.'}
-                  </p>
-                  <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      checked={autoDispatchOnSwitchOff} 
-                      onChange={(e) => {
-                        setAutoDispatchOnSwitchOff(e.target.checked);
-                        localStorage.setItem('erahi_auto_preshutdown', e.target.checked ? 'true' : 'false');
-                      }}
-                      className="w-3.5 h-3.5 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer" 
-                    />
-                    <span className="text-[10px] font-bold text-slate-700">
-                      {isHindi ? 'स्वतः WhatsApp भेजें' : 'Auto-send via WhatsApp'}
-                    </span>
-                  </label>
-                </div>
-
-                {/* 2. On Power Back On */}
-                <div className="p-3 bg-white rounded-xl border border-emerald-200/90 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">2</span>
-                      <span>{isHindi ? 'फोन ऑन होते ही' : 'As Soon As Phone Turns On'}</span>
-                    </div>
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-                      पावर ऑन
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-normal">
-                    {isHindi 
-                      ? 'फोन चालू होते ही नई लाइव लोकेशन व सुरक्षित स्थिति का संदेश स्वतः पति के पास पहुँच जाता है।' 
-                      : 'As soon as device boots, fresh live GPS & safe status are sent directly to your husband.'}
-                  </p>
-                  <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      checked={autoDispatchOnPowerOn} 
-                      onChange={(e) => {
-                        setAutoDispatchOnPowerOn(e.target.checked);
-                        localStorage.setItem('erahi_auto_power_restored', e.target.checked ? 'true' : 'false');
-                      }}
-                      className="w-3.5 h-3.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" 
-                    />
-                    <span className="text-[10px] font-bold text-slate-700">
-                      {isHindi ? 'स्वतः नई लोकेशन भेजें' : 'Auto-send on Power On'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Two Direct Interactive Simulation Buttons */}
-              <div className="pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleTriggerPreShutdown('User manual test', true)}
-                  className="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                >
-                  <Zap className="w-4 h-4" />
-                  <span>{isHindi ? '⚡ टेस्ट 1: स्विच-ऑफ ऑटो-प्रेषण' : '⚡ Test 1: Pre-Shutdown Auto Send'}</span>
-                </button>
-
-                <button
-                  onClick={handleSimulatePowerOnRestored}
-                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>{isHindi ? '🔄 टेस्ट 2: फोन ऑन ऑटो-प्रेषण' : '🔄 Test 2: Power-On Auto Send'}</span>
-                </button>
               </div>
             </div>
 
@@ -1689,7 +1326,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-rose-600" />
                   <h3 className="text-xs font-bold text-slate-900">
-                    {isHindi ? 'लाइव GPS स्थान एवं लिंक' : 'Live GPS & Pin Link'}
+                    {isHindi ? 'लाइव GPS' : 'GPS'}
                   </h3>
                 </div>
                 <button
@@ -1798,18 +1435,7 @@ export const WomenSafetyPage: React.FC<WomenSafetyPageProps> = ({
                   <span>{isSirenActive ? (isHindi ? 'सायरन बंद' : 'Stop Siren') : (isHindi ? '🚨 लाउड सायरन' : '🚨 Loud Siren')}</span>
                 </button>
 
-                {/* Strobe Flashlight */}
-                <button
-                  onClick={handleToggleStrobe}
-                  className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    isStrobeActive
-                      ? 'bg-amber-400 text-slate-900 border-amber-500 shadow-sm animate-pulse'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
-                  }`}
-                >
-                  <Sun className="w-5 h-5" />
-                  <span>{isStrobeActive ? (isHindi ? 'स्ट्रोब बंद' : 'Stop Strobe') : (isHindi ? '⚡ स्क्रीन स्ट्रोब' : '⚡ Screen Strobe')}</span>
-                </button>
+
 
                 {/* Audio Evidence Voice Recorder */}
                 <button

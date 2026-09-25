@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BareillyLocation, RouteOption, UserMode, AIRouteAdvice, LiveRideState, AppLanguage } from '../types';
 import { BAREILLY_LOCATIONS } from '../data/bareillyData';
-import { ArrowRightLeft, Sparkles, Volume2, VolumeX, ShieldAlert, CheckCircle2, Zap, Clock, Navigation, Play, Square, ArrowDown, ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRightLeft, Sparkles, Volume2, VolumeX, ShieldAlert, CheckCircle2, Zap, Clock, Navigation, Play, Square, ArrowDown, ArrowRight, MapPin, Camera, ExternalLink } from 'lucide-react';
 import { speakCleanVoice, stopVoice, playCleanChime } from '../utils/audioAlerts';
 import { TRANSLATIONS } from '../utils/i18n';
 import { AutoRunningLoader } from './AutoRunningLoader';
@@ -24,6 +24,7 @@ interface RoutePlannerProps {
   liveRideState?: LiveRideState;
   onStartRide?: (simulated: boolean) => void;
   onStopRide?: () => void;
+  onOpenStreetView?: (loc: BareillyLocation) => void;
   language?: AppLanguage;
 }
 
@@ -45,6 +46,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   liveRideState,
   onStartRide,
   onStopRide,
+  onOpenStreetView,
   language = 'en'
 }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -315,91 +317,133 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       )}
 
       {/* Route Cards Comparison */}
-      <div className="space-y-2 pt-1">
-        <div className="text-xs font-semibold text-slate-800 flex items-center justify-between">
-          <span>{isHindi ? 'रूट तुलना' : isUrdu ? 'راستوں کا موازنہ' : 'Route Comparison'}</span>
-          <span className="text-[11px] font-normal text-slate-500">
-            {isHindi ? 'रास्ता देखने के लिए चुनें' : isUrdu ? 'راستہ منتخب کریں' : 'Select to display path'}
+      <div className="space-y-2.5 pt-1">
+        <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-3.5 bg-slate-900 rounded-full"></span>
+            <span>{isHindi ? 'मार्ग विकल्प व तुलना' : isUrdu ? 'راستوں کا موازنہ' : 'Route Comparison & Options'}</span>
+          </span>
+          <span className="text-[11px] font-medium text-slate-400">
+            {isHindi ? 'रास्ता देखने हेतु क्लिक करें' : isUrdu ? 'راستہ منتخب کریں' : 'Click to select route'}
           </span>
         </div>
 
-        {routes.map((route) => {
-          const isSelected = route.id === selectedRouteId;
-          const isBypass = route.isBypass;
+        <div className="grid grid-cols-1 gap-2.5">
+          {routes.map((route) => {
+            const isSelected = route.id === selectedRouteId;
+            const isBypass = route.isBypass;
 
-          return (
-            <div
-              key={route.id}
-              onClick={() => onSelectRoute(route.id)}
-              className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                isSelected
-                  ? isBypass
-                    ? 'border-emerald-600 bg-emerald-50/40 shadow-2xs ring-1 ring-emerald-600'
-                    : 'border-slate-400 bg-slate-50 shadow-2xs ring-1 ring-slate-400'
-                  : 'border-slate-200 bg-white hover:bg-slate-50/80 shadow-2xs'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    {isBypass ? (
-                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    ) : (
-                      <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    )}
-                    <span className="text-xs font-bold text-slate-900">
-                      {isHindi ? (isBypass ? t.smartBypass : t.chokedRoute) : route.name}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {isHindi ? (isBypass ? 'कम जाम वाली सुगम गलियों का रूट' : 'भीतरी बाज़ार का भारी जाम') : route.tagline}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center justify-end gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{route.durationMin} {isHindi ? 'मिनट' : isUrdu ? 'منٹ' : 'min'}</span>
-                  </div>
-                  <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                    <span className="text-[10px] text-slate-500 font-medium">{route.distanceKm} km</span>
-                    <span className="text-[10px] font-bold text-slate-800 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded-md">
-                      ₹{route.fareEstimate || (isBypass ? 15 : 10)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Badges */}
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/60 text-[11px]">
-                {isBypass ? (
-                  <div className="flex items-center gap-1 text-emerald-700 font-medium text-[10px]">
-                    <Zap className="w-3 h-3 text-emerald-600" />
-                    <span>
-                      {isHindi 
-                        ? `${route.timeSavedMin} मिनट की बचत (जाम से बचाव)`
-                        : `Saves ${route.timeSavedMin} mins vs heavy jam`}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-slate-600 font-medium text-[10px]">
-                    <span>
-                      {isHindi
-                        ? `संभावित देरी (+${route.chokedDurationMin - 15} मिनट)`
-                        : `Heavy Jam (+${route.chokedDurationMin - 15} min delay)`}
-                    </span>
-                  </div>
+            return (
+              <div
+                key={route.id}
+                onClick={() => onSelectRoute(route.id)}
+                className={`relative rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden p-3.5 ${
+                  isSelected
+                    ? isBypass
+                      ? 'border-emerald-600 bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 shadow-md ring-2 ring-emerald-500/30'
+                      : 'border-slate-800 bg-white shadow-md ring-2 ring-slate-400/30'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs hover:shadow-xs'
+                }`}
+              >
+                {/* Active Indicator Top Accent Bar */}
+                {isSelected && (
+                  <div className={`absolute top-0 inset-x-0 h-1 ${isBypass ? 'bg-emerald-600' : 'bg-slate-800'}`} />
                 )}
 
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  isBypass ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
-                }`}>
-                  {isBypass ? (isHindi ? 'सुझाया गया' : 'Recommended') : (isHindi ? 'जाम संभावित' : 'Congested')}
-                </span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div
+                      className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5 font-black text-xs ${
+                        isBypass
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      }`}
+                    >
+                      {isBypass ? '⚡' : '📍'}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
+                          {isHindi ? (isBypass ? t.smartBypass : t.chokedRoute) : route.name}
+                        </span>
+                        {isBypass && (
+                          <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-600 text-white uppercase tracking-wider shrink-0 shadow-2xs">
+                            {isHindi ? 'सर्वश्रेष्ठ' : 'Fastest'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                        {isHindi ? (isBypass ? 'कम जाम वाली संकरी व सुगम गलियों का रूट' : 'भीतरी मुख्य बाज़ार का धीमा व जाम मार्ग') : route.tagline}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Duration & Estimated Fare */}
+                  <div className="text-right shrink-0">
+                    <div className="flex items-baseline justify-end gap-1">
+                      <span className={`text-base sm:text-lg font-black tracking-tight ${isBypass ? 'text-emerald-700' : 'text-slate-900'}`}>
+                        {route.durationMin}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-500">
+                        {isHindi ? 'मिनट' : isUrdu ? 'منٹ' : 'min'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        {route.distanceKm} km
+                      </span>
+                      <span className="text-[11px] font-extrabold text-slate-900 bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded-lg shadow-2xs">
+                        ₹{route.fareEstimate || (isBypass ? 15 : 10)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Spec & Highlights Footer */}
+                <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 text-[11px]">
+                  {isBypass ? (
+                    <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px]">
+                      <Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>
+                        {isHindi 
+                          ? `${route.timeSavedMin} मिनट की वास्तविक बचत`
+                          : `Saves ~${route.timeSavedMin} mins vs main choke`}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-rose-700 font-bold text-[11px]">
+                      <ShieldAlert className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                      <span>
+                        {isHindi
+                          ? `संभावित जाम (+${route.chokedDurationMin - 15} मिनट देरी)`
+                          : `Congested (+${route.chokedDurationMin - 15}m peak delay)`}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                      isBypass 
+                        ? 'bg-emerald-100/70 text-emerald-800 border-emerald-300' 
+                        : 'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}>
+                      {isBypass 
+                        ? (isHindi ? '🟢 सुगम गलियां' : '🟢 Smooth Clear') 
+                        : (isHindi ? '🔴 भीड़भाड़' : '🔴 Bottleneck')}
+                    </span>
+                    {isSelected && (
+                      <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-black">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Turn-by-Turn Guidance */}

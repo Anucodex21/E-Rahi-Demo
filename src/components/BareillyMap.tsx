@@ -16,10 +16,18 @@ import {
   Volume2, 
   MapPin,
   Sparkles,
-  RotateCcw
+  RotateCcw,
+  Camera,
+  Eye,
+  ExternalLink,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { BareillyLocation, ChokeZoneInfo, RouteOption, TrafficReport, LiveRideState, AppLanguage } from '../types';
 import { TRANSLATIONS } from '../utils/i18n';
+import { StreetViewModal, StreetViewData } from './StreetViewModal';
+import { resolveStreetData, STREET_DATABASE } from '../utils/streetViewData';
 
 interface BareillyMapProps {
   origin: BareillyLocation;
@@ -40,6 +48,8 @@ interface BareillyMapProps {
   userGpsLocation?: { lat: number; lng: number } | null;
   onGpsLocateSuccess?: (pos: { lat: number; lng: number }) => void;
   onOpenComplaintModal?: () => void;
+  onSetOriginLocation?: (loc: BareillyLocation) => void;
+  onSetDestinationLocation?: (loc: BareillyLocation) => void;
   language?: AppLanguage;
 }
 
@@ -64,6 +74,8 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
   userGpsLocation,
   onGpsLocateSuccess,
   onOpenComplaintModal,
+  onSetOriginLocation,
+  onSetDestinationLocation,
   language = 'en'
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
@@ -79,6 +91,7 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
   const chokeLayersRef = useRef<L.LayerGroup | null>(null);
   const liveVehicleLayerRef = useRef<L.LayerGroup | null>(null);
   const userGpsLayerRef = useRef<L.LayerGroup | null>(null);
+  const streetInspectorLayerRef = useRef<L.LayerGroup | null>(null);
 
   const [mapTheme, setMapTheme] = useState<MapTheme>('google-streets');
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
@@ -86,6 +99,11 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
   const [isLocating, setIsLocating] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(14);
   const [showLiveTrafficOverlay, setShowLiveTrafficOverlay] = useState(true);
+
+  // Spot Inspector State (Instant on-map Photo & Info Card)
+  const [activeSpotData, setActiveSpotData] = useState<StreetViewData | null>(null);
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const [isFullModalOpen, setIsFullModalOpen] = useState(false);
 
   // Define Google-like Map Tiles with vivid street colors & labels
   const getTileConfig = (theme: MapTheme) => {
@@ -155,7 +173,38 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
     }
   };
 
-  // Initialize Map with Google Maps-style smooth physics & animations
+  // Inspect spot instantly on click — drops marker and shows Photo & Info card
+  const inspectSpotAt = (lat: number, lng: number, customName?: string) => {
+    const spotInfo = resolveStreetData(lat, lng, customName);
+    setActiveSpotData(spotInfo);
+    setActivePhotoIdx(0);
+
+    // Drop interactive pin on the clicked spot
+    const map = mapInstanceRef.current;
+    const inspectorLayer = streetInspectorLayerRef.current;
+    if (map && inspectorLayer) {
+      inspectorLayer.clearLayers();
+
+      const spotPinIcon = L.divIcon({
+        className: 'spot-clicked-pin',
+        html: `
+          <div class="relative flex flex-col items-center cursor-pointer animate-bounce">
+            <div class="w-8 h-8 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center font-black text-xs shadow-2xl border-2 border-white ring-4 ring-amber-400/40">
+              📍
+            </div>
+            <div class="w-2 h-2 bg-amber-400 rotate-45 -mt-1 shadow-sm"></div>
+          </div>
+        `,
+        iconSize: [32, 42],
+        iconAnchor: [16, 21]
+      });
+
+      const inspectorMarker = L.marker([lat, lng], { icon: spotPinIcon });
+      inspectorLayer.addLayer(inspectorMarker);
+    }
+  };
+
+  // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -182,7 +231,6 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
     const tileConf = getTileConfig('google-streets');
     const primaryTileLayer = L.tileLayer(tileConf.url, tileConf.options);
 
-    // Fallback if Google tile network is restricted
     const fallbackTileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19,
@@ -204,14 +252,20 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
     chokeLayersRef.current = L.layerGroup().addTo(map);
     liveVehicleLayerRef.current = L.layerGroup().addTo(map);
     userGpsLayerRef.current = L.layerGroup().addTo(map);
+    streetInspectorLayerRef.current = L.layerGroup().addTo(map);
 
     map.on('zoomend', () => {
       setCurrentZoom(Math.round(map.getZoom() * 10) / 10);
     });
 
+    // Directly on clicking ANY spot/street on the map, show Photo & Info!
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng;
+      inspectSpotAt(lat, lng);
+    });
+
     mapInstanceRef.current = map;
 
-    // Trigger multi-phase resize invalidations for smooth initial render
     const t1 = setTimeout(() => map.invalidateSize(), 150);
     const t2 = setTimeout(() => map.invalidateSize(), 400);
 
@@ -300,104 +354,50 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
         });
 
         const marker = L.marker([cz.lat, cz.lng], { icon: chokeIcon });
-        marker.bindPopup(`
-          <div class="p-3 min-w-[220px] font-sans">
-            <div class="flex items-center justify-between gap-2 mb-1.5">
-              <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-600">
-                <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-                ${isDeadlock ? 'High Congestion Gridlock' : 'Moderate Bottleneck'}
-              </span>
-              <span class="text-[10px] font-extrabold px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-200">
-                ${cz.congestionScore}% Choked
-              </span>
-            </div>
-            <h4 class="font-bold text-slate-900 text-sm leading-snug">${cz.name}</h4>
-            <p class="text-xs text-slate-500 mb-2 font-medium">${cz.hindiName}</p>
-            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-xs text-slate-700 space-y-1">
-              <div><b>Cause:</b> ${cz.cause}</div>
-              <div class="text-slate-500 text-[11px]">Est. ~${cz.activeRickshawsEst} e-rickshaws queued</div>
-            </div>
-          </div>
-        `, {
-          className: 'google-style-popup',
-          closeButton: true
+        marker.on('click', () => {
+          inspectSpotAt(cz.lat, cz.lng, cz.name);
         });
-        chokeLayer.addLayer(marker);
 
-        // Pulsing Heatmap Circle
-        if (showHeatmap) {
-          const radius = isDeadlock ? 320 : 200;
-          const circle = L.circle([cz.lat, cz.lng], {
-            radius: radius,
-            color: isDeadlock ? '#e11d48' : '#f59e0b',
-            fillColor: isDeadlock ? '#f43f5e' : '#fbbf24',
-            fillOpacity: isDeadlock ? 0.24 : 0.16,
-            weight: 2,
-            dashArray: '4, 6'
-          });
-          chokeLayer.addLayer(circle);
-        }
+        marker.bindTooltip(`
+          <div class="p-1.5 font-sans">
+            <div class="font-bold text-slate-900 text-xs">${cz.name}</div>
+            <div class="text-[11px] text-rose-600 font-bold">${cz.congestionScore}% Jammed • Click for Photo & Info</div>
+          </div>
+        `, { sticky: true });
+
+        chokeLayer.addLayer(marker);
       });
     }
 
-    // Crowdsourced Reports with Google-style Pin Badges
-    reports.forEach((rep) => {
-      const isCritical = rep.severity === 'critical';
-      const isHeavy = rep.severity === 'heavy';
-      const badgeColor = isCritical ? 'bg-rose-600' : isHeavy ? 'bg-amber-600' : 'bg-blue-600';
-
-      const iconEmoji = 
-        rep.category === 'erickshaw_gridlock' ? '🛺' :
-        rep.category === 'railway_crossing' ? '🚂' :
-        rep.category === 'festive_rush' ? '🎪' :
-        rep.category === 'police_diversion' ? '👮' : '⚠️';
-
-      const reportIcon = L.divIcon({
-        className: 'custom-report-pin',
-        html: `
-          <div class="relative cursor-pointer group flex flex-col items-center">
-            <div class="w-8 h-8 ${badgeColor} text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white text-xs transition-transform group-hover:scale-120">
-              <span class="text-sm">${iconEmoji}</span>
-            </div>
-            <div class="absolute -top-1.5 -right-1.5 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full border border-white shadow">
-              +${rep.upvotes}
-            </div>
-          </div>
-        `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
-      });
-
-      const repMarker = L.marker([rep.coordinates.lat, rep.coordinates.lng], { icon: reportIcon });
-      repMarker.on('click', () => onSelectReport(rep));
-      chokeLayer.addLayer(repMarker);
-    });
-
-    // Charging Stations
+    // Charging Stations Layer
     if (showChargingStations) {
-      const chargingPoints = [
-        { name: 'Station Road E-Rickshaw Charging Hub', lat: 28.3440, lng: 79.4160 },
-        { name: 'Shahamatganj Battery Swap & Charge', lat: 28.3625, lng: 79.4290 },
-        { name: 'Delapeer 100ft Fast Charge Bay', lat: 28.3890, lng: 79.4310 },
-        { name: 'Satellite Bus Stand EV Point', lat: 28.3475, lng: 79.4470 }
+      const sampleEvStations = [
+        { name: 'Battery Smart Hub (Satellite)', lat: 28.3490, lng: 79.4470, slots: 14 },
+        { name: 'Sun Mobility Swapping Dock (Shyamganj)', lat: 28.3540, lng: 79.4260, slots: 8 },
+        { name: 'GreenCharge EV Point (Choupla)', lat: 28.3505, lng: 79.4140, slots: 12 },
+        { name: 'Kutubkhana EV Swapper', lat: 28.3590, lng: 79.4190, slots: 6 },
       ];
 
-      chargingPoints.forEach(cp => {
-        const chargingIcon = L.divIcon({
-          className: 'charging-pin',
+      sampleEvStations.forEach((st) => {
+        const evIcon = L.divIcon({
+          className: 'ev-station-pin',
           html: `
-            <div class="w-7 h-7 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md border-2 border-white text-xs font-bold transition-transform hover:scale-110">
-              ⚡
+            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg border-2 border-white ring-2 ring-emerald-300 cursor-pointer hover:scale-110 transition-transform">
+              <span class="text-xs font-black">⚡</span>
             </div>
           `,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
-        const marker = L.marker([cp.lat, cp.lng], { icon: chargingIcon });
-        marker.bindPopup(`
-          <div class="p-2 text-xs">
-            <b class="text-emerald-700 text-sm flex items-center gap-1">⚡ ${cp.name}</b>
-            <p class="text-slate-500 mt-1">Certified EV Battery Swap & Fast Charge Station (₹30-₹50/swap)</p>
+
+        const marker = L.marker([st.lat, st.lng], { icon: evIcon });
+        marker.on('click', () => {
+          inspectSpotAt(st.lat, st.lng, st.name);
+        });
+        marker.bindTooltip(`
+          <div class="p-1 font-sans text-xs">
+            <div class="font-bold text-emerald-700">${st.name}</div>
+            <div class="text-slate-500">${st.slots} Swapping Docks Available • Click for Photo</div>
           </div>
         `);
         chokeLayer.addLayer(marker);
@@ -434,11 +434,13 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
       iconAnchor: [18, 28]
     });
     const originMarker = L.marker([origin.lat, origin.lng], { icon: originIcon });
-    originMarker.bindPopup(`
-      <div class="p-2.5">
-        <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Pickup Point (प्रस्थान)</div>
-        <div class="font-extrabold text-slate-900 text-sm">${origin.name}</div>
-        <div class="text-xs text-slate-500">${origin.hindiName}</div>
+    originMarker.on('click', () => {
+      inspectSpotAt(origin.lat, origin.lng, origin.name);
+    });
+    originMarker.bindTooltip(`
+      <div class="p-1 text-xs">
+        <div class="font-bold text-emerald-700">Pickup: ${origin.name}</div>
+        <div class="text-slate-500">Click to view photo & details</div>
       </div>
     `);
     markerLayer.addLayer(originMarker);
@@ -461,11 +463,13 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
       iconAnchor: [18, 28]
     });
     const destMarker = L.marker([destination.lat, destination.lng], { icon: destIcon });
-    destMarker.bindPopup(`
-      <div class="p-2.5">
-        <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Drop Location (गंतव्य)</div>
-        <div class="font-extrabold text-slate-900 text-sm">${destination.name}</div>
-        <div class="text-xs text-slate-500">${destination.hindiName}</div>
+    destMarker.on('click', () => {
+      inspectSpotAt(destination.lat, destination.lng, destination.name);
+    });
+    destMarker.bindTooltip(`
+      <div class="p-1 text-xs">
+        <div class="font-bold text-rose-700">Drop: ${destination.name}</div>
+        <div class="text-slate-500">Click to view photo & details</div>
       </div>
     `);
     markerLayer.addLayer(destMarker);
@@ -480,7 +484,6 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
       const isSelected = route.id === selectedRouteId;
       const isBypass = route.isBypass;
 
-      // Base outline casing for crisp Google Maps highway look
       const casingColor = isSelected ? '#ffffff' : '#e2e8f0';
       const casingWidth = isSelected ? 9 : 6;
 
@@ -493,7 +496,6 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
       });
       routeLayer.addLayer(casing);
 
-      // Main route polyline
       const strokeColor = isBypass 
         ? (isSelected ? '#059669' : '#10b981') 
         : (isSelected ? '#2563eb' : '#94a3b8');
@@ -508,7 +510,13 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
         lineJoin: 'round'
       });
 
-      polyline.on('click', () => onSelectRoute(route.id));
+      // Clicking on route selects route AND directly shows photo & corridor info!
+      polyline.on('click', (e) => {
+        onSelectRoute(route.id);
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        inspectSpotAt(lat, lng, `${route.name} Corridor`);
+      });
 
       polyline.bindTooltip(`
         <div class="p-1 font-sans text-xs">
@@ -517,7 +525,7 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
             <span>· ${route.name}</span>
           </div>
           <div class="font-semibold text-slate-700 mt-0.5">${route.durationMin} mins (${route.distanceKm} km)</div>
-          ${isBypass ? `<div class="text-emerald-600 text-[11px] font-bold">⚡ Saves ${route.timeSavedMin} mins</div>` : ''}
+          <div class="text-amber-600 text-[11px] font-bold mt-0.5">Click spot to view photo & details</div>
         </div>
       `, { sticky: true });
 
@@ -525,7 +533,6 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
       route.pathPoints.forEach(p => allBoundsPoints.push(p));
     });
 
-    // Fit map bounds smoothly
     if (allBoundsPoints.length > 0 && (!liveRideState || !liveRideState.isActive)) {
       const bounds = L.latLngBounds(allBoundsPoints);
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: true, duration: 0.8 });
@@ -543,210 +550,176 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
     liveLayer.clearLayers();
     userLayer.clearLayers();
 
-    // 1. User Real GPS Pin (Google Blue Dot with Pulsing Radar Ring)
     if (userGpsLocation) {
       const userIcon = L.divIcon({
         className: 'google-my-location-dot',
         html: `
           <div class="relative flex items-center justify-center">
-            <span class="absolute inline-flex h-9 w-9 rounded-full bg-blue-500 opacity-40 animate-ping"></span>
-            <div class="w-5 h-5 bg-blue-600 rounded-full border-3 border-white shadow-xl flex items-center justify-center">
-              <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-            </div>
+            <span class="absolute inline-flex h-8 w-8 rounded-full bg-blue-500 opacity-40 animate-ping"></span>
+            <div class="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg"></div>
           </div>
         `,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
       });
-
-      const userMarker = L.marker([userGpsLocation.lat, userGpsLocation.lng], { icon: userIcon, zIndexOffset: 800 });
-      userMarker.bindPopup("<b>आपकी लोकेशन (Your Live GPS Location)</b>");
+      const userMarker = L.marker([userGpsLocation.lat, userGpsLocation.lng], { icon: userIcon });
+      userMarker.bindTooltip('<div class="text-xs font-bold text-blue-700">📍 You Are Here</div>', { permanent: false });
       userLayer.addLayer(userMarker);
     }
 
-    // 2. Active Ride Auto Marker
     if (liveRideState && liveRideState.isActive && liveRideState.currentLocation) {
-      const { lat, lng } = liveRideState.currentLocation;
-
       const autoIcon = L.divIcon({
-        className: 'live-erickshaw-active-marker',
+        className: 'google-live-auto',
         html: `
-          <div class="relative flex items-center justify-center group cursor-pointer">
-            <span class="absolute -inset-2.5 rounded-full bg-amber-400/80 animate-ping"></span>
-            <div class="w-11 h-11 rounded-full bg-slate-950 border-2 border-amber-400 text-white flex items-center justify-center shadow-2xl relative z-10">
-              <span class="text-2xl">🛺</span>
+          <div class="relative flex flex-col items-center cursor-pointer animate-pulse">
+            <div class="w-10 h-10 rounded-2xl bg-amber-400 text-slate-900 flex items-center justify-center font-black text-base shadow-2xl border-2 border-white ring-4 ring-amber-400/40 transform transition-transform duration-300">
+              🛺
             </div>
-            <!-- Speed badge -->
-            <div class="absolute -top-3 bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow border border-white whitespace-nowrap z-20">
-              ${liveRideState.speedKmh} km/h
-            </div>
-            <!-- Distance remaining tag -->
-            <div class="absolute -bottom-6 bg-slate-900/95 text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-lg border border-amber-400/40 whitespace-nowrap z-20">
-              ${liveRideState.distanceRemainingKm} km (${liveRideState.timeRemainingMin}m)
+            <div class="bg-slate-900 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full shadow-md mt-0.5 whitespace-nowrap">
+              ${Math.round(liveRideState.speedKmh || 0)} km/h
             </div>
           </div>
         `,
-        iconSize: [44, 44],
-        iconAnchor: [22, 22]
+        iconSize: [40, 48],
+        iconAnchor: [20, 24]
       });
 
-      const autoMarker = L.marker([lat, lng], { icon: autoIcon, zIndexOffset: 1000 });
+      const autoMarker = L.marker(
+        [liveRideState.currentLocation.lat, liveRideState.currentLocation.lng], 
+        { icon: autoIcon }
+      );
       liveLayer.addLayer(autoMarker);
-
-      // Smooth pan to follow vehicle
-      map.panTo([lat, lng], { animate: true, duration: 0.6 });
     }
   }, [liveRideState, userGpsLocation]);
 
-  // Smooth Zoom Controls (Google Maps Style)
   const handleSmoothZoomIn = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.zoomIn(0.5, { animate: true });
-    }
+    mapInstanceRef.current?.setZoom((mapInstanceRef.current.getZoom() || 14) + 1);
   };
 
   const handleSmoothZoomOut = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.zoomOut(0.5, { animate: true });
+    mapInstanceRef.current?.setZoom((mapInstanceRef.current.getZoom() || 14) - 1);
+  };
+
+  const handleLocateMe = () => {
+    setIsLocating(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setIsLocating(false);
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          if (onGpsLocateSuccess) onGpsLocateSuccess(coords);
+          mapInstanceRef.current?.flyTo([coords.lat, coords.lng], 16, {
+            animate: true,
+            duration: 1.2
+          });
+        },
+        (err) => {
+          console.log('GPS error:', err);
+          setIsLocating(false);
+          if (cityCenter) {
+            mapInstanceRef.current?.flyTo([cityCenter.lat, cityCenter.lng], 15);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      setIsLocating(false);
     }
   };
 
   const handleRecenter = () => {
-    if (mapInstanceRef.current) {
+    if (cityCenter && mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([cityCenter.lat, cityCenter.lng], 14, {
         animate: true,
-        duration: 0.9,
-        easeLinearity: 0.2
+        duration: 1.0
       });
     }
   };
 
-  const handleLocateMe = () => {
-    if (!('geolocation' in navigator)) return;
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsLocating(false);
-        const { latitude, longitude } = pos.coords;
-        if (onGpsLocateSuccess) {
-          onGpsLocateSuccess({ lat: latitude, lng: longitude });
-        }
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo([latitude, longitude], 15.5, {
-            animate: true,
-            duration: 1.2
-          });
-        }
-      },
-      (err) => {
-        setIsLocating(false);
-        console.warn('Geolocation error:', err);
-        handleRecenter();
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
   const handleToggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-    setTimeout(() => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.invalidateSize();
-      }
-    }, 100);
-    setTimeout(() => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.invalidateSize();
-      }
-    }, 300);
+    setTimeout(() => mapInstanceRef.current?.invalidateSize(), 200);
   };
 
   return (
     <div 
-      className={`relative w-full transition-all duration-300 ${
+      className={`relative w-full overflow-hidden transition-all duration-300 font-sans ${
         isFullscreen 
-          ? 'fixed inset-0 z-[9999] bg-white h-screen w-screen p-0 m-0 rounded-none' 
-          : 'h-full min-h-[460px] rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm'
+          ? 'fixed inset-0 z-[9999] h-screen w-screen bg-white' 
+          : 'h-full w-full rounded-2xl border border-slate-200/90 shadow-2xs'
       }`}
     >
-      {/* Map Surface */}
-      <div ref={mapContainerRef} className="w-full h-full z-0 bg-slate-100" />
+      {/* Map Canvas */}
+      <div ref={mapContainerRef} className="h-full w-full z-0 bg-slate-100" />
 
-      {/* Top Left Floating Google Maps Layer Switcher Pill */}
-      <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-2">
+      {/* Top Left Floating Toolbar (Layer Switcher) */}
+      <div className="absolute top-2.5 left-2.5 z-[1000] flex items-center gap-1.5">
         <div className="relative">
           <button
             onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
-            className="bg-white/95 hover:bg-white text-slate-800 text-xs font-bold px-3 py-2 rounded-xl shadow-md border border-slate-200/80 backdrop-blur-md flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+            className="bg-white/95 hover:bg-white text-slate-800 text-xs font-semibold px-2.5 py-1.5 rounded-xl shadow-2xs border border-slate-200/90 backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer min-h-[34px]"
             title="Switch Map Layers"
           >
-            <Layers className="w-4 h-4 text-blue-600" />
-            <span className="capitalize">{mapTheme}</span>
+            <Layers className="w-3.5 h-3.5 text-slate-600" />
+            <span className="hidden sm:inline capitalize">
+              {mapTheme.replace('google-', '')}
+            </span>
           </button>
 
           {isLayerMenuOpen && (
-            <div className="absolute left-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-1">
-                Map Types (नक्शा प्रकार)
+            <div className="absolute top-10 left-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-1.5 w-44 z-[1010] animate-in fade-in duration-150">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+                Map Types
               </div>
-              <div className="grid grid-cols-1 gap-1">
+              <div className="space-y-0.5">
                 <button
                   onClick={() => { setMapTheme('google-streets'); setIsLayerMenuOpen(false); }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    mapTheme === 'google-streets' ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-medium flex items-center justify-between transition-colors ${
+                    mapTheme === 'google-streets' ? 'bg-slate-900 text-white font-semibold' : 'hover:bg-slate-100 text-slate-700'
                   }`}
                 >
-                  <span className="flex items-center gap-2">🗺️ <span>Google Streets</span></span>
-                  {mapTheme === 'google-streets' && <span className="text-blue-600 font-bold">✓</span>}
+                  <span className="flex items-center gap-2"><span>🗺️</span> <span>Google Streets</span></span>
+                  {mapTheme === 'google-streets' && <span className="font-bold">✓</span>}
                 </button>
                 <button
                   onClick={() => { setMapTheme('google-hybrid'); setIsLayerMenuOpen(false); }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    mapTheme === 'google-hybrid' ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-medium flex items-center justify-between transition-colors ${
+                    mapTheme === 'google-hybrid' ? 'bg-slate-900 text-white font-semibold' : 'hover:bg-slate-100 text-slate-700'
                   }`}
                 >
-                  <span className="flex items-center gap-2">🛰️ <span>Google Satellite</span></span>
-                  {mapTheme === 'google-hybrid' && <span className="text-blue-600 font-bold">✓</span>}
+                  <span className="flex items-center gap-2"><span>🛰️</span> <span>Satellite</span></span>
+                  {mapTheme === 'google-hybrid' && <span className="font-bold">✓</span>}
                 </button>
                 <button
                   onClick={() => { setMapTheme('google-terrain'); setIsLayerMenuOpen(false); }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    mapTheme === 'google-terrain' ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-medium flex items-center justify-between transition-colors ${
+                    mapTheme === 'google-terrain' ? 'bg-slate-900 text-white font-semibold' : 'hover:bg-slate-100 text-slate-700'
                   }`}
                 >
-                  <span className="flex items-center gap-2">⛰️ <span>Google Terrain</span></span>
-                  {mapTheme === 'google-terrain' && <span className="text-blue-600 font-bold">✓</span>}
+                  <span className="flex items-center gap-2"><span>⛰️</span> <span>Terrain</span></span>
+                  {mapTheme === 'google-terrain' && <span className="font-bold">✓</span>}
                 </button>
                 <button
                   onClick={() => { setMapTheme('osm'); setIsLayerMenuOpen(false); }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    mapTheme === 'osm' ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-medium flex items-center justify-between transition-colors ${
+                    mapTheme === 'osm' ? 'bg-slate-900 text-white font-semibold' : 'hover:bg-slate-100 text-slate-700'
                   }`}
                 >
-                  <span className="flex items-center gap-2">🌐 <span>OpenStreetMap</span></span>
-                  {mapTheme === 'osm' && <span className="text-blue-600 font-bold">✓</span>}
-                </button>
-                <button
-                  onClick={() => { setMapTheme('dark'); setIsLayerMenuOpen(false); }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    mapTheme === 'dark' ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">🌙 <span>Night Mode</span></span>
-                  {mapTheme === 'dark' && <span className="text-blue-600 font-bold">✓</span>}
+                  <span className="flex items-center gap-2"><span>🌐</span> <span>OpenStreetMap</span></span>
+                  {mapTheme === 'osm' && <span className="font-bold">✓</span>}
                 </button>
               </div>
 
               <div className="border-t border-slate-100 my-1 pt-1">
                 <button
                   onClick={() => setShowLiveTrafficOverlay(!showLiveTrafficOverlay)}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    showLiveTrafficOverlay ? 'text-amber-700 bg-amber-50' : 'text-slate-600 hover:bg-slate-50'
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-medium flex items-center justify-between transition-colors ${
+                    showLiveTrafficOverlay ? 'text-amber-800 bg-amber-50 font-semibold' : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
                     <span className="text-xs">🚦</span>
-                    <span>Live Traffic Layer</span>
+                    <span>Live Traffic</span>
                   </span>
                   <span className="text-[10px] font-bold">{showLiveTrafficOverlay ? 'ON' : 'OFF'}</span>
                 </button>
@@ -756,76 +729,260 @@ export const BareillyMap: React.FC<BareillyMapProps> = ({
         </div>
       </div>
 
-      {/* Top Right Floating Controls (Locate Me, Fullscreen / Minimize, Recenter) */}
-      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2">
+      {/* Top Right Floating Controls (Locate Me, Recenter, Fullscreen) */}
+      <div className="absolute top-2.5 right-2.5 z-[1000] flex items-center gap-1.5">
         {/* My Location GPS Button */}
         <button
           onClick={handleLocateMe}
-          className="bg-white/95 hover:bg-white text-blue-700 text-xs font-bold px-3 py-2 rounded-xl shadow-md border border-slate-200/80 backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+          className="bg-white/95 hover:bg-white text-slate-800 text-xs font-semibold px-2.5 py-1.5 rounded-xl shadow-2xs border border-slate-200/90 backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer min-h-[34px]"
           title={t.myGpsBtn}
         >
-          <Crosshair className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin text-blue-600' : ''}`} />
+          <Crosshair className={`w-3.5 h-3.5 text-blue-600 ${isLocating ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">{t.myGpsBtn}</span>
         </button>
 
         {/* Recenter City Button */}
         <button
           onClick={handleRecenter}
-          className="bg-white/95 hover:bg-white text-slate-700 text-xs font-bold px-2.5 py-2 rounded-xl shadow-md border border-slate-200/80 backdrop-blur-md flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+          className="bg-white/95 hover:bg-white text-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl shadow-2xs border border-slate-200/90 backdrop-blur-md flex items-center gap-1 transition-all active:scale-95 cursor-pointer min-h-[34px]"
           title={t.recenterMapBtn}
         >
-          <Compass className="w-3.5 h-3.5 text-slate-600" />
+          <Compass className="w-3.5 h-3.5 text-slate-500" />
           <span className="hidden sm:inline">{isHindi ? 'रीसेंटर' : 'Recenter'}</span>
         </button>
 
         {/* Maximize / Minimize Full-Screen Theater Button */}
         <button
           onClick={handleToggleFullscreen}
-          className={`text-xs font-bold px-3 py-2 rounded-xl shadow-md backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer border ${
+          className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl shadow-2xs backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer min-h-[34px] border ${
             isFullscreen 
-              ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-slate-400/40' 
-              : 'bg-white/95 hover:bg-white text-slate-800 border-slate-200/80'
+              ? 'bg-slate-900 text-white border-slate-900' 
+              : 'bg-white/95 hover:bg-white text-slate-700 border-slate-200/90'
           }`}
           title={isFullscreen ? 'Minimize Map' : 'Maximize Map'}
         >
           {isFullscreen ? (
             <>
               <Minimize2 className="w-3.5 h-3.5 text-amber-300" />
-              <span>{isHindi ? 'छोटा करें' : 'Minimize'}</span>
+              <span>{isHindi ? 'छोटा' : 'Exit'}</span>
             </>
           ) : (
             <>
-              <Maximize2 className="w-3.5 h-3.5 text-slate-700" />
-              <span>{isHindi ? 'बड़ा नक्शा' : 'Expand'}</span>
+              <Maximize2 className="w-3.5 h-3.5 text-slate-600" />
+              <span>{isHindi ? 'बड़ा' : 'Expand'}</span>
             </>
           )}
         </button>
       </div>
 
-      {/* Bottom Right Floating Smooth Zoom Controls (Google Maps Style) */}
-      <div className="absolute bottom-6 right-3 z-[1000] flex flex-col items-center bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/90 overflow-hidden divide-y divide-slate-100">
+      {/* Bottom Right Floating Smooth Zoom Controls */}
+      <div className="absolute bottom-4 right-2.5 z-[1000] flex flex-col items-center bg-white/95 backdrop-blur-md rounded-xl shadow-2xs border border-slate-200/90 overflow-hidden divide-y divide-slate-100">
         <button
           onClick={handleSmoothZoomIn}
-          className="p-2.5 hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors active:scale-90 cursor-pointer"
+          className="p-2 hover:bg-slate-100 text-slate-700 transition-colors active:scale-90 cursor-pointer"
           title="Zoom in smoothly"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={handleSmoothZoomOut}
-          className="p-2.5 hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors active:scale-90 cursor-pointer"
+          className="p-2 hover:bg-slate-100 text-slate-700 transition-colors active:scale-90 cursor-pointer"
           title="Zoom out smoothly"
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Bottom Left Quick Informational Hint Pill */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-slate-950/85 backdrop-blur-md text-white text-[11px] font-medium px-3.5 py-1.5 rounded-full shadow-lg border border-white/15 pointer-events-none flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>{cityName} Live Transit Network</span>
-      </div>
+      {/* DIRECT ON-MAP SPOT PHOTO & INFO CARD (Appears immediately when user clicks any spot/street) */}
+      {activeSpotData && (
+        <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-[380px] z-[1020] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden animate-in slide-in-from-bottom-3 duration-200 flex flex-col max-h-[75vh]">
+          
+          {/* Hero Spot Photo */}
+          <div className="relative aspect-[16/9] w-full bg-slate-900 overflow-hidden select-none group">
+            <img
+              src={activeSpotData.photos[activePhotoIdx]?.url || activeSpotData.photos[0]?.url}
+              alt={activeSpotData.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            
+            {/* Top Overlay Badges */}
+            <div className="absolute top-2 inset-x-2 flex items-center justify-between pointer-events-none">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
+                📍 {cityName}
+              </span>
+
+              <div className="flex items-center gap-1 pointer-events-auto">
+                {/* Expand to Full Modal */}
+                <button
+                  onClick={() => setIsFullModalOpen(true)}
+                  className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+                  title="360° & Full Gallery"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Close Spot Card */}
+                <button
+                  onClick={() => setActiveSpotData(null)}
+                  className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+                  title="Close Card"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Photo Caption & Multi-photo Indicators */}
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2.5 pt-6 flex items-end justify-between">
+              <p className="text-white text-xs font-bold leading-snug drop-shadow-md truncate max-w-[80%]">
+                {activeSpotData.photos[activePhotoIdx]?.caption || activeSpotData.name}
+              </p>
+
+              {activeSpotData.photos.length > 1 && (
+                <div className="flex items-center gap-1 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded-md text-[10px] text-white">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActivePhotoIdx((prev) => (prev - 1 + activeSpotData.photos.length) % activeSpotData.photos.length);
+                    }}
+                    className="hover:text-amber-300 cursor-pointer"
+                  >
+                    ‹
+                  </button>
+                  <span>{activePhotoIdx + 1}/{activeSpotData.photos.length}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActivePhotoIdx((prev) => (prev + 1) % activeSpotData.photos.length);
+                    }}
+                    className="hover:text-amber-300 cursor-pointer"
+                  >
+                    ›
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Spot Information & Live Metrics */}
+          <div className="p-3 space-y-2 overflow-y-auto scrollbar-none">
+            <div>
+              <h4 className="text-sm font-extrabold text-slate-900 leading-tight">
+                {activeSpotData.name}
+              </h4>
+              <p className="text-[11px] text-slate-500 font-medium">
+                {activeSpotData.hindiName || activeSpotData.area}
+              </p>
+            </div>
+
+            {/* Live Metrics Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                activeSpotData.trafficStatus === 'smooth'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : activeSpotData.trafficStatus === 'moderate'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-rose-50 text-rose-700 border-rose-200'
+              }`}>
+                🚦 {activeSpotData.trafficSpeedKmph} km/h • {activeSpotData.trafficStatus.toUpperCase()}
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                🛺 ₹{activeSpotData.fareFromStation} Shared Fare
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                🛣️ {activeSpotData.roadWidthMeters}m Wide
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+              {activeSpotData.description}
+            </p>
+
+            {/* Quick Action Buttons */}
+            <div className="pt-1 grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => {
+                  if (onSetOriginLocation) {
+                    onSetOriginLocation({
+                      id: `spot-origin-${Date.now()}`,
+                      name: activeSpotData.name,
+                      hindiName: activeSpotData.name,
+                      lat: activeSpotData.lat,
+                      lng: activeSpotData.lng,
+                      category: 'market',
+                      description: `${activeSpotData.name} Transit Hub`,
+                      isChokeHazard: false
+                    });
+                  }
+                  setActiveSpotData(null);
+                }}
+                className="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>{isHindi ? '🟢 प्रस्थान (A) चुनें' : '🟢 Start Here (A)'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (onSetDestinationLocation) {
+                    onSetDestinationLocation({
+                      id: `spot-dest-${Date.now()}`,
+                      name: activeSpotData.name,
+                      hindiName: activeSpotData.name,
+                      lat: activeSpotData.lat,
+                      lng: activeSpotData.lng,
+                      category: 'market',
+                      description: `${activeSpotData.name} Transit Destination`,
+                      isChokeHazard: false
+                    });
+                  }
+                  setActiveSpotData(null);
+                }}
+                className="py-1.5 px-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition-colors shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>{isHindi ? '🔴 गंतव्य (B) चुनें' : '🔴 Drop Here (B)'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Screen Street View & 360° Panorama Modal */}
+      <StreetViewModal
+        isOpen={isFullModalOpen}
+        onClose={() => setIsFullModalOpen(false)}
+        streetData={activeSpotData}
+        language={language}
+        cityName={cityName}
+        onSetAsOrigin={(name, lat, lng) => {
+          if (onSetOriginLocation) {
+            onSetOriginLocation({
+              id: `street-origin-${Date.now()}`,
+              name,
+              hindiName: name,
+              lat,
+              lng,
+              category: 'market',
+              description: `${name} Transit Hub`,
+              isChokeHazard: false
+            });
+          }
+        }}
+        onSetAsDestination={(name, lat, lng) => {
+          if (onSetDestinationLocation) {
+            onSetDestinationLocation({
+              id: `street-dest-${Date.now()}`,
+              name,
+              hindiName: name,
+              lat,
+              lng,
+              category: 'market',
+              description: `${name} Transit Destination`,
+              isChokeHazard: false
+            });
+          }
+        }}
+        onOpenTrafficReport={onMapClickReport}
+      />
     </div>
   );
 };
-
